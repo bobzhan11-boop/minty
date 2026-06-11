@@ -1,0 +1,24 @@
+# Dependencies (reinstall with: npm install)
+node_modules/
+
+# Next.js build output (regenerate with: npm run build)
+.next/
+out/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Prisma SQLite dev database (regenerate with: npm run db:push && npm run db:seed)
+*.db
+*.db-journal
+
+# Local env overrides
+.env.local
+.env.*.local
+
+# OS / archive junk
+.DS_Store
+__MACOSX/
+Thumbs.db

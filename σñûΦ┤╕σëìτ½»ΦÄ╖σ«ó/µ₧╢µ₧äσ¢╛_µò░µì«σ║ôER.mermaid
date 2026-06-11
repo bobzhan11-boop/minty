@@ -1,0 +1,267 @@
+erDiagram
+    %% ========== 用户与客户 ==========
+    users {
+        int id PK
+        string email UK "登录邮箱"
+        string password_hash "bcrypt加密"
+        string name "显示名称"
+        string company "公司名称"
+        enum role "admin | operator | customer"
+        datetime created_at
+        datetime updated_at
+    }
+
+    customers {
+        int id PK
+        string email UK "客户邮箱(关联users)"
+        string name "客户姓名"
+        string company "公司名称"
+        string country "国家/地区"
+        string phone "联系电话"
+        string source_channel "来源渠道(UTM/页面)"
+        enum status "new | contacted | quoted | negotiating | closed_won | closed_lost"
+        datetime created_at
+        datetime updated_at
+    }
+
+    customer_tags {
+        int id PK
+        string name UK "标签名称(VIP/待跟进/已报价等)"
+        string color "标签颜色"
+        datetime created_at
+    }
+
+    customer_tag_relations {
+        int id PK
+        int customer_id FK "关联客户"
+        int tag_id FK "关联标签"
+        datetime created_at
+    }
+
+    customer_notes {
+        int id PK
+        int customer_id FK "关联客户"
+        int author_id FK "备注人(users)"
+        text content "备注内容"
+        datetime created_at
+    }
+
+    %% ========== 商品 ==========
+    product_categories {
+        int id PK
+        string name "品类名称(T恤/卫衣/帽子等)"
+        string slug "URL别名"
+        int sort_order "排序权重"
+        datetime created_at
+    }
+
+    products {
+        int id PK
+        int category_id FK "所属品类"
+        string name "商品名称"
+        string slug "URL别名"
+        text description "商品描述(富文本)"
+        int moq "最小起订量"
+        json price_tiers "价格梯度JSON"
+        text specs "规格参数"
+        enum status "draft | published | archived"
+        int sort_order "排序权重"
+        datetime created_at
+        datetime updated_at
+    }
+
+    product_images {
+        int id PK
+        int product_id FK "所属商品"
+        string url "图片URL(OSS)"
+        string alt_text "图片描述(alt)"
+        boolean is_primary "是否主图"
+        int sort_order "排序"
+    }
+
+    product_videos {
+        int id PK
+        int product_id FK "所属商品"
+        enum type "youtube | self_hosted"
+        string url "视频URL"
+        string thumbnail_url "封面图URL"
+    }
+
+    %% ========== 案例 ==========
+    cases {
+        int id PK
+        string title "案例标题"
+        string slug "URL别名"
+        string industry "客户行业"
+        string region "客户地区"
+        text description "项目描述(富文本)"
+        text testimonial "客户评价"
+        enum status "draft | published | archived"
+        int sort_order "排序权重"
+        datetime created_at
+        datetime updated_at
+    }
+
+    case_images {
+        int id PK
+        int case_id FK "所属案例"
+        enum type "cover | process | result"
+        string url "图片URL"
+        string caption "图片说明"
+        int sort_order "排序"
+    }
+
+    %% ========== 工厂 ==========
+    factory_info {
+        int id PK
+        text description "工厂介绍(富文本)"
+        int monthly_capacity "月产能"
+        int equipment_count "设备数量"
+        int employee_count "员工人数"
+        datetime updated_at
+    }
+
+    factory_images {
+        int id PK
+        enum type "panorama | production | warehouse | quality"
+        string url "图片URL"
+        string caption "图片说明"
+        int sort_order "排序"
+    }
+
+    factory_certifications {
+        int id PK
+        string name "认证名称(ISO/OEKO-TEX等)"
+        string image_url "证书图片URL"
+        date issued_date "颁发日期"
+        date expiry_date "到期日期"
+    }
+
+    %% ========== 品牌 ==========
+    brand_content {
+        int id PK
+        text story "品牌故事(富文本)"
+        string video_url "品牌宣传视频(YouTube)"
+        datetime updated_at
+    }
+
+    %% ========== 首页模块 ==========
+    home_modules {
+        int id PK
+        enum module_type "hero | advantages | featured_products | factory_preview | logo_wall | bottom_cta"
+        json content "模块内容JSON"
+        boolean is_active "是否启用"
+        int sort_order "排序"
+        datetime updated_at
+    }
+
+    %% ========== 询盘 ==========
+    inquiries {
+        int id PK
+        int customer_id FK "关联客户(可空)"
+        string name "提交人姓名"
+        string email "提交人邮箱"
+        string company "公司名称"
+        string country "国家/地区"
+        string phone "联系电话"
+        json interested_products "感兴趣的产品(多选)"
+        string estimated_quantity "预计数量"
+        text message "需求描述"
+        string source_page "来源页面"
+        string utm_source "UTM来源"
+        string utm_medium "UTM媒介"
+        string utm_campaign "UTM活动"
+        enum channel "form"
+        enum status "pending | replied | in_progress | completed | closed"
+        int assigned_to FK "负责人(users)"
+        datetime created_at
+        datetime updated_at
+    }
+
+    inquiry_attachments {
+        int id PK
+        int inquiry_id FK "所属询盘"
+        string file_url "文件URL(OSS)"
+        string file_name "原始文件名"
+        string file_type "文件类型"
+        int file_size "文件大小(bytes)"
+    }
+
+    inquiry_notes {
+        int id PK
+        int inquiry_id FK "所属询盘"
+        int author_id FK "备注人(users)"
+        text content "内部备注"
+        datetime created_at
+    }
+
+    %% ========== 用户扩展 ==========
+    user_favorites {
+        int id PK
+        int user_id FK "收藏用户"
+        enum resource_type "product | case"
+        int resource_id "被收藏资源ID"
+        datetime created_at
+    }
+
+    user_designs {
+        int id PK
+        int user_id FK "上传用户"
+        string file_url "文件URL(OSS)"
+        string file_name "原始文件名"
+        string file_type "文件类型"
+        int file_size "文件大小(bytes)"
+        datetime created_at
+    }
+
+    %% ========== 埋点 & 审计 ==========
+    tracking_events {
+        bigint id PK
+        string event_name "事件名称"
+        json params "事件参数JSON"
+        string session_id "会话ID"
+        string ip_address "访客IP"
+        string user_agent "浏览器UA"
+        string referrer "来源URL"
+        datetime created_at "事件时间"
+    }
+
+    admin_logs {
+        int id PK
+        int user_id FK "操作人"
+        string action "操作类型"
+        string resource_type "资源类型"
+        int resource_id "资源ID"
+        json changes "变更内容JSON"
+        string ip_address "操作IP"
+        datetime created_at
+    }
+
+    %% ========== 关系 ==========
+    users ||--o{ customer_notes : "writes"
+    users ||--o{ inquiry_notes : "writes"
+    users ||--o{ admin_logs : "performs"
+    users ||--o{ inquiries : "assigned_to"
+
+    customers ||--o{ customer_tag_relations : "has"
+    customers ||--o{ customer_notes : "has"
+    customers ||--o{ inquiries : "submits"
+    customers }o--o| users : "links_via_email"
+
+    customer_tags ||--o{ customer_tag_relations : "tagged_in"
+
+    product_categories ||--o{ products : "contains"
+    products ||--o{ product_images : "has"
+    products ||--o{ product_videos : "has"
+    products ||--o{ inquiries : "referenced_in"
+
+    cases ||--o{ case_images : "has"
+
+    factory_info ||--o{ factory_images : "has"
+    factory_info ||--o{ factory_certifications : "has"
+
+    inquiries ||--o{ inquiry_attachments : "has"
+    inquiries ||--o{ inquiry_notes : "has"
+
+    users ||--o{ user_favorites : "collects"
+    users ||--o{ user_designs : "uploads"

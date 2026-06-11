@@ -1,0 +1,144 @@
+graph TB
+    subgraph CLIENT["🌐 客户端 · Client Side"]
+        direction TB
+        Browser["浏览器 Browser<br/>Chrome / Safari / Edge"]
+        Mobile["移动端 Mobile<br/>响应式适配"]
+    end
+
+    subgraph CDN_LAYER["⚡ CDN & 静态资源"]
+        direction LR
+        CDN["CDN 节点<br/>Cloudflare / 阿里云CDN"]
+        StaticAssets["静态资源<br/>JS/CSS/图片 WebP"]
+    end
+
+    subgraph NGINX_LAYER["🔒 Nginx 网关层"]
+        direction LR
+        SSL["SSL 终止<br/>HTTPS 强制"]
+        ReverseProxy["反向代理<br/>路由分发"]
+        RateLimitNginx["基础限流<br/>IP 黑名单"]
+    end
+
+    subgraph APP_LAYER["🚀 Next.js 应用层 (Docker)"]
+        direction TB
+
+        subgraph FRONTEND["前台渲染 · SSR/SSG"]
+            direction LR
+            HomePage["首页<br/>Homepage"]
+            ProductPages["商品展示<br/>Products"]
+            FactoryPage["工厂介绍<br/>About/Factory"]
+            ShowcasePage["案例展示<br/>Showcase"]
+            ContactPage["询盘表单<br/>Contact"]
+            CustomOrder["POD 定制<br/>Custom Order"]
+        end
+
+        subgraph API["API Routes · /api/v1"]
+            direction LR
+            PublicAPI["公开接口<br/>商品/案例/工厂/品牌"]
+            InquiryAPI["询盘接口<br/>表单提交"]
+            EventAPI["埋点接口<br/>事件上报"]
+            AuthAPI["认证接口<br/>注册/登录"]
+            AdminAPI["后台接口<br/>RBAC 权限"]
+        end
+
+        subgraph SERVICES["业务服务层"]
+            direction LR
+            TrackingSvc["埋点服务<br/>trackEvent()"]
+            EmailSvc["邮件通知<br/>Resend/SendGrid"]
+            UploadSvc["文件上传<br/>类型校验/压缩"]
+            AuthSvc["认证服务<br/>JWT + bcrypt"]
+            CacheSvc["缓存服务<br/>Redis 操作"]
+        end
+    end
+
+    subgraph DATA_LAYER["💾 数据存储层"]
+        direction LR
+        PG["PostgreSQL<br/>业务数据库<br/>客户/商品/询盘/埋点"]
+        Redis["Redis<br/>会话缓存<br/>限流计数/热点数据"]
+        OSS["对象存储<br/>阿里云OSS / AWS S3<br/>图片/产品短视频"]
+    end
+
+    subgraph EXTERNAL["🔗 外部服务"]
+        direction LR
+        GA4["Google Analytics 4<br/>宏观流量分析"]
+        YouTube["YouTube<br/>工厂长视频托管"]
+        WhatsApp["WhatsApp<br/>客户沟通跳转"]
+        EmailProvider["邮件服务商<br/>Resend / SendGrid"]
+    end
+
+    subgraph ADMIN["🔧 后台管理 · /admin"]
+        direction TB
+        Dashboard["运营仪表盘<br/>核心指标 + 图表"]
+        ContentMgmt["内容管理<br/>商品/案例/工厂/品牌/首页"]
+        CustomerCRM["客户 CRM<br/>标签/状态/跟进备注"]
+        InquiryMgmt["询盘管理<br/>状态流转/备注"]
+        AnalyticsView["埋点日志<br/>事件查询/可视化"]
+    end
+
+    %% 客户端 → CDN → Nginx
+    Browser --> CDN
+    Mobile --> CDN
+    CDN --> SSL
+    CDN -. 直接分发静态资源 .-> StaticAssets
+    StaticAssets -. 回源 .-> OSS
+
+    %% Nginx 内部流转
+    SSL --> ReverseProxy
+    ReverseProxy --> RateLimitNginx
+    RateLimitNginx --> FRONTEND
+    RateLimitNginx --> API
+
+    %% 后台管理也通过 Nginx 入口
+    Browser -. /admin 请求 .-> SSL
+
+    %% 前台页面 → API
+    HomePage --> PublicAPI
+    ProductPages --> PublicAPI
+    ContactPage --> InquiryAPI
+    ContactPage --> EventAPI
+    CustomOrder --> InquiryAPI
+
+    %% API → Services
+    InquiryAPI --> EmailSvc
+    InquiryAPI --> UploadSvc
+    EventAPI --> TrackingSvc
+    AuthAPI --> AuthSvc
+    AdminAPI --> CacheSvc
+
+    %% Services → Data
+    TrackingSvc --> PG
+    TrackingSvc --> GA4
+    AuthSvc --> PG
+    AuthSvc --> Redis
+    CacheSvc --> Redis
+    UploadSvc --> OSS
+    PublicAPI --> PG
+    PublicAPI --> Redis
+    InquiryAPI --> PG
+
+    %% 后台 → API
+    Dashboard --> AdminAPI
+    ContentMgmt --> AdminAPI
+    CustomerCRM --> AdminAPI
+    InquiryMgmt --> AdminAPI
+    AnalyticsView --> AdminAPI
+
+    %% 外部服务连接
+    ProductPages -. 嵌入播放 .-> YouTube
+    ContactPage -. 跳转链接 .-> WhatsApp
+    EmailSvc --> EmailProvider
+
+    classDef client fill:#E3F2FD,stroke:#1565C0,color:#0D47A1
+    classDef nginx fill:#FFF3E0,stroke:#E65100,color:#BF360C
+    classDef app fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+    classDef data fill:#F3E5F5,stroke:#6A1B9A,color:#4A148C
+    classDef external fill:#FFF9C4,stroke:#F9A825,color:#F57F17
+    classDef admin fill:#E0F7FA,stroke:#00838F,color:#006064
+
+    class Browser,Mobile client
+    class SSL,ReverseProxy,RateLimitNginx nginx
+    class HomePage,ProductPages,FactoryPage,ShowcasePage,ContactPage,CustomOrder app
+    class PublicAPI,InquiryAPI,EventAPI,AuthAPI,AdminAPI app
+    class TrackingSvc,EmailSvc,UploadSvc,AuthSvc,CacheSvc app
+    class PG,Redis,OSS data
+    class GA4,YouTube,WhatsApp,EmailProvider external
+    class Dashboard,ContentMgmt,CustomerCRM,InquiryMgmt,AnalyticsView admin

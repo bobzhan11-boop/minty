@@ -1,0 +1,371 @@
+// Minty — 服装独立站出海 一期
+// Schema mirrors the ER diagram (架构图_数据库ER.mermaid).
+//
+// NOTE on SQLite (local dev): Prisma does not support native `enum` or `Json`
+// scalar types on SQLite. Enums are modeled as String with the allowed values
+// documented inline; JSON columns are String holding a JSON-encoded payload.
+// For production Postgres, swap provider to "postgresql" and these can become
+// real enum/Json types.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ========== 用户与客户 ==========
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  company      String?
+  role         String   @default("customer") // admin | operator | customer
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  customerNotes   CustomerNote[]
+  inquiryNotes    InquiryNote[]
+  adminLogs       AdminLog[]
+  assignedInquiry Inquiry[]      @relation("AssignedInquiries")
+  favorites       UserFavorite[]
+  designs         UserDesign[]
+
+  @@map("users")
+}
+
+model Customer {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  name          String?
+  company       String?
+  country       String?
+  phone         String?
+  sourceChannel String?  @map("source_channel")
+  status        String   @default("new") // new | contacted | quoted | negotiating | closed_won | closed_lost
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tagRelations CustomerTagRelation[]
+  notes        CustomerNote[]
+  inquiries    Inquiry[]
+
+  @@map("customers")
+}
+
+model CustomerTag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  relations CustomerTagRelation[]
+
+  @@map("customer_tags")
+}
+
+model CustomerTagRelation {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @map("customer_id")
+  tagId      Int      @map("tag_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tag      CustomerTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, tagId])
+  @@map("customer_tag_relations")
+}
+
+model CustomerNote {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @map("customer_id")
+  authorId   Int      @map("author_id")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id])
+
+  @@map("customer_notes")
+}
+
+// ========== 商品 ==========
+
+model ProductCategory {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  products Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int      @map("category_id")
+  name        String
+  slug        String   @unique
+  description String?
+  moq         Int      @default(50)
+  priceTiers  String?  @map("price_tiers") // JSON: [{ qty, price }]
+  specs       String?
+  status      String   @default("published") // draft | published | archived
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category  ProductCategory @relation(fields: [categoryId], references: [id])
+  images    ProductImage[]
+  videos    ProductVideo[]
+  inquiries Inquiry[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  productId Int     @map("product_id")
+  url       String
+  altText   String? @map("alt_text")
+  isPrimary Boolean @default(false) @map("is_primary")
+  sortOrder Int     @default(0) @map("sort_order")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model ProductVideo {
+  id           Int     @id @default(autoincrement())
+  productId    Int     @map("product_id")
+  type         String  @default("youtube") // youtube | self_hosted
+  url          String
+  thumbnailUrl String? @map("thumbnail_url")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_videos")
+}
+
+// ========== 案例 ==========
+
+model Case {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  industry    String?
+  region      String?
+  description String?
+  testimonial String?
+  status      String   @default("published") // draft | published | archived
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  images CaseImage[]
+
+  @@map("cases")
+}
+
+model CaseImage {
+  id        Int     @id @default(autoincrement())
+  caseId    Int     @map("case_id")
+  type      String  @default("process") // cover | process | result
+  url       String
+  caption   String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@map("case_images")
+}
+
+// ========== 工厂 ==========
+
+model FactoryInfo {
+  id              Int      @id @default(autoincrement())
+  description     String?
+  monthlyCapacity Int?     @map("monthly_capacity")
+  equipmentCount  Int?     @map("equipment_count")
+  employeeCount   Int?     @map("employee_count")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("factory_info")
+}
+
+model FactoryImage {
+  id        Int     @id @default(autoincrement())
+  type      String  @default("production") // panorama | production | warehouse | quality
+  url       String
+  caption   String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  @@map("factory_images")
+}
+
+model FactoryCertification {
+  id         Int       @id @default(autoincrement())
+  name       String
+  imageUrl   String?   @map("image_url")
+  issuedDate DateTime? @map("issued_date")
+  expiryDate DateTime? @map("expiry_date")
+
+  @@map("factory_certifications")
+}
+
+// ========== 品牌 ==========
+
+model BrandContent {
+  id        Int      @id @default(autoincrement())
+  story     String?
+  videoUrl  String?  @map("video_url")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("brand_content")
+}
+
+// ========== 首页模块 ==========
+
+model HomeModule {
+  id         Int      @id @default(autoincrement())
+  moduleType String   @map("module_type") // hero | advantages | featured_products | factory_preview | logo_wall | bottom_cta
+  content    String   // JSON payload
+  isActive   Boolean  @default(true) @map("is_active")
+  sortOrder  Int      @default(0) @map("sort_order")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("home_modules")
+}
+
+// ========== 询盘 ==========
+
+model Inquiry {
+  id                 Int      @id @default(autoincrement())
+  customerId         Int?     @map("customer_id")
+  productId          Int?     @map("product_id")
+  name               String
+  email              String
+  company            String?
+  country            String?
+  phone              String?
+  interestedProducts String?  @map("interested_products") // JSON array of labels
+  estimatedQuantity  String?  @map("estimated_quantity")
+  message            String?
+  sourcePage         String?  @map("source_page")
+  utmSource          String?  @map("utm_source")
+  utmMedium          String?  @map("utm_medium")
+  utmCampaign        String?  @map("utm_campaign")
+  channel            String   @default("form") // form
+  status             String   @default("pending") // pending | replied | in_progress | completed | closed
+  assignedTo         Int?     @map("assigned_to")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  customer    Customer?           @relation(fields: [customerId], references: [id])
+  product     Product?            @relation(fields: [productId], references: [id])
+  assignee    User?               @relation("AssignedInquiries", fields: [assignedTo], references: [id])
+  attachments InquiryAttachment[]
+  notes       InquiryNote[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("inquiries")
+}
+
+model InquiryAttachment {
+  id        Int    @id @default(autoincrement())
+  inquiryId Int    @map("inquiry_id")
+  fileUrl   String @map("file_url")
+  fileName  String @map("file_name")
+  fileType  String @map("file_type")
+  fileSize  Int    @map("file_size")
+
+  inquiry Inquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@map("inquiry_attachments")
+}
+
+model InquiryNote {
+  id        Int      @id @default(autoincrement())
+  inquiryId Int      @map("inquiry_id")
+  authorId  Int      @map("author_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  inquiry Inquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@map("inquiry_notes")
+}
+
+// ========== 用户扩展 ==========
+
+model UserFavorite {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  resourceType String   @map("resource_type") // product | case
+  resourceId   Int      @map("resource_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceType, resourceId])
+  @@map("user_favorites")
+}
+
+model UserDesign {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  fileUrl   String   @map("file_url")
+  fileName  String   @map("file_name")
+  fileType  String   @map("file_type")
+  fileSize  Int      @map("file_size")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_designs")
+}
+
+// ========== 埋点 & 审计 ==========
+
+model TrackingEvent {
+  // NOTE: BigInt @default(autoincrement()) does not generate IDs on SQLite, so
+  // dev uses Int. On production Postgres this can safely become BigInt to match
+  // the ER diagram (high-volume event table, partitioned by month per §4.2).
+  id        Int      @id @default(autoincrement())
+  eventName String   @map("event_name")
+  params    String?  // JSON payload
+  sessionId String?  @map("session_id")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  referrer  String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventName])
+  @@index([createdAt])
+  @@map("tracking_events")
+}
+
+model AdminLog {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   Int?     @map("resource_id")
+  changes      String?  // JSON payload
+  ipAddress    String?  @map("ip_address")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("admin_logs")
+}
