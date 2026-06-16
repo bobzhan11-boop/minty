@@ -7,18 +7,35 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/v1/products — public product list with pagination + category filter (§5.2).
- * Query: ?page=1&pageSize=12&category=t-shirts
+ * GET /api/v1/products — public product list with pagination + category filter +
+ * keyword search (§5.2). Powers Mia's product-search skill.
+ * Query: ?page=1&pageSize=12&category=t-shirts&q=hoodie
+ *
+ * `q` matches (case-insensitively, via SQLite LIKE) on product name, description
+ * and category name.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(searchParams.get("pageSize")) || 12));
   const category = searchParams.get("category") || undefined;
+  const q = searchParams.get("q")?.trim() || undefined;
 
   const where = {
     status: "published",
     ...(category ? { category: { slug: category } } : {}),
+    // SQLite `contains` is already case-insensitive for ASCII (no `mode` needed,
+    // which SQLite would reject).
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q } },
+            { description: { contains: q } },
+            { specs: { contains: q } },
+            { category: { name: { contains: q } } },
+          ],
+        }
+      : {}),
   };
 
   const [total, products] = await Promise.all([

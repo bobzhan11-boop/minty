@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Send, X } from "lucide-react";
+import { useState } from "react";
 import { CtaLink } from "@/components/cta-link";
+import { MiaThread } from "@/components/mia-thread";
+import { useMiaChat } from "@/components/use-mia-chat";
 import { whatsappUrl } from "@/lib/constants";
 import { trackEvent } from "@/lib/track";
+import { CLERK_NAME, CLERK_POSTER, QUICK_REPLIES } from "@/lib/mia";
 
 /** Hero data shape (mirrors the `hero` home-module in the DB). */
 export interface HeroData {
@@ -14,25 +17,6 @@ export interface HeroData {
   secondaryCta: { label: string; href: string };
   bgImage: string;
 }
-
-interface ChatMessage {
-  from: "clerk" | "user";
-  text: string;
-}
-
-const CLERK_NAME = "Mia";
-
-/** Poster shown until the digital-human loop (/digital-clerk.mp4) plays — a frame from the video. */
-const CLERK_POSTER = "/digital-clerk-poster.jpg";
-
-const WELCOME = `Hi! I'm ${CLERK_NAME}, your apparel concierge. 👋 Ask me anything — pricing, MOQ, samples or shipping.`;
-
-const QUICK_REPLIES = [
-  "MOQ & pricing",
-  "Custom POD options",
-  "Request a sample",
-  "Shipping & lead time",
-];
 
 /** Readable one-line intro sentences that flow behind the figure (full-bleed). */
 const MARQUEE_PHRASES = [
@@ -44,26 +28,6 @@ const MARQUEE_PHRASES = [
   "Send your specs — get a quote within 6 hours",
 ];
 
-/** Lightweight keyword-matched canned replies — front-end only, no backend AI. */
-function getReply(input: string): string {
-  const t = input.toLowerCase();
-  if (/(price|pricing|cost|quote|quotation)/.test(t))
-    return "Pricing depends on the style, fabric and quantity. Tell me the product and your target quantity — or tap “Get a Quote” and our team replies within 6 hours.";
-  if (/(moq|minimum|how many|quantity)/.test(t))
-    return "Our MOQ is flexible — as low as 50 pcs for many blanks, with better tiers as volume grows. Which style are you looking at?";
-  if (/(sample|prototype|proof)/.test(t))
-    return "Yes — we make pre-production samples so you approve fit and print before bulk. Share your design or a reference and we'll sample it.";
-  if (/(ship|shipping|delivery|lead time|how long)/.test(t))
-    return "We ship worldwide with DDP options. Typical lead time is 12–20 days after sample approval.";
-  if (/(pod|print|custom|design|embroider|dtg|logo)/.test(t))
-    return "We're a Print-On-Demand factory — DTG, screen print, embroidery and more. Upload your artwork on the quote form and we'll handle production end to end.";
-  if (/(hoodie|t-?shirt|tee|cap|hat|activewear|apparel|clothing)/.test(t))
-    return "Great choice — we produce that in-house with full customization. Want a quick quote, or to browse the catalog first?";
-  if (/(hi|hello|hey|good (morning|afternoon|evening))/.test(t))
-    return `Hi there! 😊 How can I help with your custom apparel today — pricing, MOQ, samples or shipping?`;
-  return "Got it! I'll pass this to our team. For the fastest response, tap “Get a Quote” or chat on WhatsApp — we usually reply within 6 hours.";
-}
-
 export function HeroConcierge({ hero }: { hero: HeroData | null }) {
   const slogan = hero?.slogan ?? "Custom Apparel, Factory-Direct";
   const subtitle =
@@ -73,29 +37,7 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
   const secondaryCta = hero?.secondaryCta ?? { label: "View Products", href: "/products" };
 
   const [active, setActive] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([{ from: "clerk", text: WELCOME }]);
-  const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
-  const threadRef = useRef<HTMLDivElement>(null);
-
-  // Keep the chat thread scrolled to the latest message.
-  useEffect(() => {
-    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, typing]);
-
-  function send(text: string) {
-    const value = text.trim();
-    if (!value || typing) return;
-    setInput("");
-    setMessages((m) => [...m, { from: "user", text: value }]);
-    trackEvent("cta_click", { button_text: "concierge_send", position: "hero_concierge" });
-    setTyping(true);
-    const reply = getReply(value);
-    window.setTimeout(() => {
-      setMessages((m) => [...m, { from: "clerk", text: reply }]);
-      setTyping(false);
-    }, 750);
-  }
+  const { messages, input, setInput, typing, send } = useMiaChat("hero_concierge");
 
   return (
     <section className="relative isolate flex min-h-[88vh] items-center overflow-hidden bg-white">
@@ -251,30 +193,7 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
               </div>
 
               {/* thread */}
-              <div ref={threadRef} className="max-h-48 space-y-3 overflow-y-auto px-4 py-4">
-                {messages.map((m, i) => (
-                  <div key={i} className={m.from === "user" ? "flex justify-end" : "flex justify-start"}>
-                    <p
-                      className={
-                        m.from === "user"
-                          ? "max-w-[80%] rounded-2xl rounded-br-sm bg-brand-600 px-3.5 py-2 text-sm text-white"
-                          : "max-w-[80%] rounded-2xl rounded-bl-sm bg-slate-100 px-3.5 py-2 text-sm text-ink"
-                      }
-                    >
-                      {m.text}
-                    </p>
-                  </div>
-                ))}
-                {typing && (
-                  <div className="flex justify-start">
-                    <span className="inline-flex gap-1 rounded-2xl rounded-bl-sm bg-slate-100 px-3.5 py-3">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.2s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:-0.1s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400" />
-                    </span>
-                  </div>
-                )}
-              </div>
+              <MiaThread messages={messages} typing={typing} className="max-h-48 px-4 py-4" />
 
               {/* quick replies (only before the user has spoken) */}
               {messages.length <= 1 && (

@@ -4,6 +4,7 @@ import { SITE } from "@/lib/constants";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { WhatsAppButton } from "@/components/whatsapp-button";
+import { MiaWidget } from "@/components/mia-widget";
 import { Analytics } from "@/components/analytics";
 import { PageViewTracker } from "@/components/page-view-tracker";
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="flex-1">{children}</main>
         <Footer />
         <WhatsAppButton />
+        <MiaWidget />
       </body>
     </html>
   );
