@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { BadgeCheck } from "lucide-react";
+import { Award, Globe2, Layers } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SectionHeading } from "@/components/section-heading";
 import { CtaLink } from "@/components/cta-link";
+import {
+  FACTORY_AREAS,
+  FACTORY_MATERIALS,
+  FACTORY_CREDENTIALS,
+  FACTORY_TRUSTED_BY,
+  FACTORY_FACTS,
+} from "@/lib/factory-profile";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +20,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const [brand, factory, images, certs] = await Promise.all([
+  const [brand, factory, images] = await Promise.all([
     prisma.brandContent.findFirst(),
     prisma.factoryInfo.findFirst(),
     prisma.factoryImage.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.factoryCertification.findMany(),
   ]);
 
   return (
@@ -58,6 +64,48 @@ export default async function AboutPage() {
         </section>
       )}
 
+      {/* Global reach — areas we ship to */}
+      <section className="section">
+        <div className="container">
+          <SectionHeading
+            center
+            eyebrow="Global Reach"
+            title="Where we ship"
+            subtitle={`We currently supply ${FACTORY_AREAS.length} key regions, delivering to retail brands and importers worldwide.`}
+          />
+          <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {FACTORY_AREAS.map((a) => (
+              <div key={a.name} className="card flex flex-col items-center gap-2 px-5 py-6 text-center">
+                <Globe2 className="h-7 w-7 text-brand-600" />
+                <p className="font-semibold text-ink">{a.name}</p>
+                {a.note && <p className="text-xs text-ink-muted">{a.note}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Materials we work with (content coming soon) */}
+      <section className="bg-slate-50 py-14">
+        <div className="container">
+          <SectionHeading center eyebrow="Materials" title="Materials we work with" />
+          {FACTORY_MATERIALS.length > 0 ? (
+            <div className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-3">
+              {FACTORY_MATERIALS.map((m) => (
+                <span key={m.name} className="card flex items-center gap-2 px-4 py-2 text-sm font-medium text-ink">
+                  <Layers className="h-4 w-4 text-brand-600" /> {m.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mx-auto mt-6 max-w-2xl text-center text-ink-muted">
+              Detailed material specifications are coming soon. Contact us for the full list of
+              materials and finishes we offer.
+            </p>
+          )}
+        </div>
+      </section>
+
       {/* Gallery */}
       {images.length > 0 && (
         <section className="section">
@@ -77,22 +125,56 @@ export default async function AboutPage() {
         </section>
       )}
 
-      {/* Certifications */}
-      {certs.length > 0 && (
-        <section className="bg-slate-50 py-14">
-          <div className="container">
-            <SectionHeading center eyebrow="Compliance" title="Certified & audited" />
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              {certs.map((c) => (
-                <span key={c.id} className="card flex items-center gap-2 px-5 py-3 text-sm font-medium text-ink">
-                  <BadgeCheck className="h-5 w-5 text-brand-600" />
-                  {c.name}
+      {/* Why brands trust us — track record, audits & clients (how good are we) */}
+      <section className="bg-slate-50 py-14">
+        <div className="container">
+          <SectionHeading
+            center
+            eyebrow="Why Brands Trust Us"
+            title="Audited, certified & proven"
+            subtitle="Independent third-party audits and two decades of production for global retailers back every order."
+          />
+
+          {/* headline facts */}
+          <dl className="mx-auto mt-10 grid max-w-4xl grid-cols-2 gap-6 text-center lg:grid-cols-4">
+            {FACTORY_FACTS.map((f) => (
+              <div key={f.label}>
+                <dt className="text-3xl font-bold text-brand-700">{f.value}</dt>
+                <dd className="mt-1 text-sm text-ink-muted">{f.label}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {/* certifications & audits */}
+          <div className="mt-12 flex flex-wrap justify-center gap-4">
+            {FACTORY_CREDENTIALS.map((c) => (
+              <span key={c.name} className="card flex items-center gap-3 px-5 py-3 text-left">
+                <Award className="h-6 w-6 shrink-0 text-brand-600" />
+                <span>
+                  <span className="block text-sm font-semibold text-ink">{c.name}</span>
+                  <span className="block text-xs text-ink-muted">{c.detail}</span>
                 </span>
-              ))}
-            </div>
+              </span>
+            ))}
           </div>
-        </section>
-      )}
+
+          {/* trusted by */}
+          {FACTORY_TRUSTED_BY.length > 0 && (
+            <div className="mt-12 text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                Trusted by leading retailers
+              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+                {FACTORY_TRUSTED_BY.map((b) => (
+                  <span key={b} className="text-2xl font-bold tracking-tight text-ink/70">
+                    {b}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* CTA */}
       <section className="bg-brand-600 py-14">
