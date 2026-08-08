@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
             { name: { contains: q } },
             { description: { contains: q } },
             { specs: { contains: q } },
+            { keywords: { contains: q } },
             { category: { name: { contains: q } } },
           ],
         }
