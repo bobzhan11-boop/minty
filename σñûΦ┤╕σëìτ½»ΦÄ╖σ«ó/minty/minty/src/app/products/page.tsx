@@ -3,22 +3,25 @@ import Link from "next/link";
 import { getPublishedProducts, getCategories } from "@/lib/queries";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
+import { ProductSearch } from "@/components/product-search";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Products — Custom Apparel Catalog",
-  description: "Browse our catalog of premium blanks: tees, hoodies, caps and activewear, ready for custom POD.",
+  title: "Bags — Wholesale Catalog",
+  description:
+    "Browse our catalog of custom women's & kids' bags: backpacks, crossbody bags, totes, handbags, clutches and small leather goods. Factory-direct, wholesale MOQ.",
 };
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { category?: string };
+  searchParams: { category?: string; q?: string };
 }) {
   const active = searchParams.category;
+  const query = searchParams.q?.trim() || undefined;
   const [products, categories] = await Promise.all([
-    getPublishedProducts(active),
+    getPublishedProducts(active, query),
     getCategories(),
   ]);
 
@@ -26,25 +29,49 @@ export default async function ProductsPage({
     <div className="container py-14">
       <SectionHeading
         eyebrow="Catalog"
-        title="Custom apparel, built for your brand"
-        subtitle="Every style below is a customizable blank — add your prints, labels and packaging. Filter by category to narrow down."
+        title="Custom bags, built for your brand"
+        subtitle="Every style below is fully customizable — your materials, colors, hardware, linings and private-label branding. Search or filter to narrow down."
       />
 
+      {/* Search */}
+      <div className="mt-8">
+        <ProductSearch initialQuery={query ?? ""} category={active} />
+      </div>
+
       {/* Category filter */}
-      <div className="mt-8 flex flex-wrap gap-2">
-        <FilterChip label="All" href="/products" active={!active} />
+      <div className="mt-6 flex flex-wrap gap-2">
+        <FilterChip label="All" href={hrefFor(undefined, query)} active={!active} />
         {categories.map((c) => (
           <FilterChip
             key={c.slug}
             label={c.name}
-            href={`/products?category=${c.slug}`}
+            href={hrefFor(c.slug, query)}
             active={active === c.slug}
           />
         ))}
       </div>
 
+      {query && (
+        <p className="mt-6 text-sm text-ink-muted">
+          {products.length > 0
+            ? `${products.length} result${products.length === 1 ? "" : "s"} for “${query}”`
+            : `No bags match “${query}”.`}
+        </p>
+      )}
+
       {products.length === 0 ? (
-        <p className="mt-16 text-center text-ink-muted">No products in this category yet.</p>
+        <div className="mt-12 text-center">
+          <p className="text-ink-muted">
+            {query
+              ? "Try a different keyword — e.g. “backpack”, “crossbody”, “pink”, or a SKU."
+              : "No products in this category yet."}
+          </p>
+          {query && (
+            <Link href={hrefFor(active, undefined)} className="btn-secondary mt-4 inline-flex">
+              Clear search
+            </Link>
+          )}
+        </div>
       ) : (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((p) => <ProductCard key={p.slug} p={p} />)}
@@ -52,6 +79,15 @@ export default async function ProductsPage({
       )}
     </div>
   );
+}
+
+/** Build a /products URL preserving whichever of category / q are set. */
+function hrefFor(category?: string, q?: string): string {
+  const params = new URLSearchParams();
+  if (category) params.set("category", category);
+  if (q) params.set("q", q);
+  const qs = params.toString();
+  return qs ? `/products?${qs}` : "/products";
 }
 
 function FilterChip({ label, href, active }: { label: string; href: string; active: boolean }) {

@@ -9,13 +9,13 @@ export const CLERK_NAME = "Mia";
 /** Poster shown until the digital-human loop plays — also Mia's avatar. */
 export const CLERK_POSTER = "/digital-clerk-poster.jpg";
 
-export const WELCOME = `Hi! I'm ${CLERK_NAME}, your apparel concierge. 👋 Ask me anything — or type a keyword (e.g. “hoodie”) to search our products.`;
+export const WELCOME = `Hi! I'm ${CLERK_NAME}, your bag concierge. 👋 Ask me anything — or type a keyword (e.g. “backpack”, “crossbody”, “pink”) to search our bags.`;
 
 export const QUICK_REPLIES = [
-  "Search hoodies",
+  "Backpacks",
+  "Crossbody bags",
+  "Kids' bags",
   "MOQ & pricing",
-  "Request a sample",
-  "Shipping & lead time",
 ];
 
 /** A product match returned by Mia's search skill (mirrors /api/v1/products items). */
@@ -39,20 +39,20 @@ export interface ChatMessage {
 export function getReply(input: string): string {
   const t = input.toLowerCase();
   if (/(price|pricing|cost|quote|quotation)/.test(t))
-    return "Pricing depends on the style, fabric and quantity. Tell me the product and your target quantity — or tap “Get a Quote” and our team replies within 6 hours.";
-  if (/(moq|minimum|how many|quantity)/.test(t))
-    return "Our MOQ is flexible — as low as 50 pcs for many blanks, with better tiers as volume grows. Which style are you looking at?";
+    return "Pricing depends on the style, material and quantity. Tell me the bag and your target quantity — or tap “Get a Quote” and our team replies within 6 hours.";
+  if (/(moq|minimum|how many|quantity|wholesale)/.test(t))
+    return "We're a wholesale bag factory — our standard MOQ is 1,000 pcs per style, with better unit pricing as volume grows. Which style are you looking at?";
   if (/(sample|prototype|proof)/.test(t))
-    return "Yes — we make pre-production samples so you approve fit and print before bulk. Share your design or a reference and we'll sample it.";
+    return "Yes — we make pre-production samples so you approve materials, color and hardware before bulk. Share your design or a reference and we'll sample it.";
   if (/(ship|shipping|delivery|lead time|how long)/.test(t))
-    return "We ship worldwide with DDP options. Typical lead time is 12–20 days after sample approval.";
-  if (/(pod|print|custom|design|embroider|dtg|logo)/.test(t))
-    return "We're a Print-On-Demand factory — DTG, screen print, embroidery and more. Upload your artwork on the quote form and we'll handle production end to end.";
-  if (/(hoodie|t-?shirt|tee|cap|hat|activewear|apparel|clothing)/.test(t))
-    return "Great choice — we produce that in-house with full customization. Want a quick quote, or to browse the catalog first?";
+    return "We ship worldwide with DDP options. Typical lead time is 25–35 days after sample approval.";
+  if (/(custom|design|oem|odm|private label|logo|emboss|hardware|material)/.test(t))
+    return "We do full custom / OEM & ODM — PU and genuine leather, custom hardware, embossing, linings, zippers and private-label branding. Upload your artwork on the quote form and we'll handle production end to end.";
+  if (/(backpack|crossbody|tote|handbag|clutch|purse|wallet|shoulder|bag|leather)/.test(t))
+    return "Great choice — we produce that in-house with full customization. Want a quick quote, or to browse the catalog first? Try typing a style like “backpack” or “crossbody”.";
   if (/(hi|hello|hey|good (morning|afternoon|evening))/.test(t))
-    return "Hi there! 😊 How can I help with your custom apparel today — or type a keyword to search our products.";
-  return "Got it! I'll pass this to our team. For the fastest response, tap “Get a Quote” or chat on WhatsApp — we usually reply within 6 hours. You can also type a keyword to search our catalog.";
+    return "Hi there! 😊 How can I help with your custom bags today — or type a keyword like “backpack” or “pink” to search our catalog.";
+  return "Got it! I'll pass this to our team. For the fastest response, tap “Get a Quote” or chat on WhatsApp — we usually reply within 6 hours. You can also type a keyword (e.g. “crossbody”, “kids”) to search our bags.";
 }
 
 /** Decide whether a message should trigger a product search (skip greetings/thanks). */
@@ -63,15 +63,17 @@ export function looksSearchable(input: string): boolean {
   return true;
 }
 
-/** Strip filler words so "show me some hoodies please" → "hoodies". */
+/** Strip filler words + punctuation so "show me some backpacks please" → "backpacks".
+ * (The API tokenizes/singularizes, so plurals like "backpacks" still match.) */
 function toQuery(input: string): string {
   return input
     .toLowerCase()
+    .replace(/['’]/g, "")
     .replace(
       /\b(show|me|some|any|please|i|want|need|looking|for|do|you|have|got|the|a|an|search|find|browse|your|can|get)\b/g,
       " ",
     )
-    .replace(/[?!.,]/g, " ")
+    .replace(/[?!.,&]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

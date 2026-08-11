@@ -118,7 +118,7 @@ export function MiaWidget() {
         type="button"
         onClick={() => (open ? setOpen(false) : expand())}
         onFocus={expand}
-        aria-label={`Chat with ${CLERK_NAME}, your apparel concierge`}
+        aria-label={`Chat with ${CLERK_NAME}, your bag concierge`}
         aria-expanded={open}
         className={`group relative h-14 w-14 overflow-hidden rounded-full shadow-lg ring-2 ring-white transition hover:scale-105 ${
           open ? "opacity-0" : "opacity-100"

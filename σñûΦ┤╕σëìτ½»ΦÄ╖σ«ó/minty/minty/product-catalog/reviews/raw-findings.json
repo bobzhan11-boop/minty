@@ -1,0 +1,533 @@
+{
+  "tester": [
+    {
+      "role": "tester",
+      "area": "pages-nav",
+      "summary": "All 9 target pages load with HTTP 200 and no error/exception banners, all nav+footer links resolve, 404 handling is correct for bad slugs and bad URLs, and every page is structurally sound (single <main>, closed </html>, header/nav present). Product detail page renders a real bag name, a genuine 1MB product photo, MOQ, \"Contact for pricing\" and a \"Request a quote\" CTA. The dominant problem is content/metadata, not routing: nearly all page <title>/<meta description>, the homepage H1, nav labels, and /about + /showcase copy are still APPAREL/POD placeholder text (\"Minty Apparel\", \"Custom Apparel Manufacturer\", \"hoodie\", \"Custom POD\"), which is now wrong for a leather-bags catalog. Also missing og:image/canonical, the 404 page reuses the apparel homepage <title>, and the WhatsApp contact number is a dummy (8613800000000).",
+      "positives": [
+        "Every page returns HTTP 200: / /products /about /contact /custom-order /showcase /privacy /terms and product /products/hj-bw100001 (verified via curl -w %{http_code}).",
+        "No error/exception banners on any page: grep for 'application error|Internal Server Error|TypeError|Something went wrong' etc. returned 0 matches on all 9 pages.",
+        "404 handling is correct: bad product slug (/products/does-not-exist), bad top-level (/nonsense-page), bad nested (/about/nope), and uppercase slug (/products/HJ-BW100001) all return 404. The 404 body renders real content ('404', 'not found', 'Back to' x3), 18KB page, not a blank error.",
+        "Trailing-slash normalization works: /products/ returns 308 redirect (correct Next.js behavior).",
+        "All nav + footer internal links resolve to real 200 pages (/, /products, /about, /contact, /custom-order, /showcase, /privacy, /terms); featured product links /products/hj-bw100001..6 all valid.",
+        "Category filter links work end-to-end: /products?category=kids-bags and ?category=womens-bags return 200, and the API confirms correct mapping (kids-bags -> \"Kids' Bags\", womens-bags -> \"Women's Bags\").",
+        "Structural integrity solid on all pages: exactly one <main>, a closing </html>, and a header/nav element each.",
+        "Product detail page (/products/hj-bw100001) is well-formed: real H1 'Quilted Leather-Look Mini Backpack', correct product-specific meta description, MOQ present, 'Contact for pricing', and 'Request a quote' CTA.",
+        "Product image is a genuine high-res photo (image/png, 1,095,478 bytes) and visually matches the product name — a black quilted faux-leather mini backpack with gold hardware and front zip pocket (confirmed by reading the PNG).",
+        "Contact page form is complete with name, email, phone, company, message (textarea) fields and a submit button.",
+        "<html lang=\"en\"> and <meta name=\"robots\" content=\"index, follow\"> present; viewport and charset meta present on homepage."
+      ],
+      "issues": [
+        {
+          "title": "All page titles and meta descriptions are apparel/POD placeholder — wrong for a leather-bag catalog",
+          "severity": "high",
+          "detail": "Every page's <title> and <meta description> still describe apparel/Print-On-Demand, not bags. Homepage: <title>Minty Apparel — Custom Apparel Manufacturer for Global Brands</title> and description 'Your factory-direct partner for custom Print-On-Demand apparel...'. /products: 'Products — Custom Apparel Catalog — Minty Apparel' / 'Browse our catalog of premium blanks: tees, hoodies, caps and activewear...'. /custom-order title 'Custom POD — How It Works'. Even the correct bag product pages get the suffix '— Minty Apparel' (e.g. 'Quilted Leather-Look Mini Backpack — Minty Apparel'). /privacy and /terms reuse the generic apparel description verbatim. This is SEO/branding-visible in tab titles and search snippets and directly contradicts the actual products.",
+          "suggestion": "Update the site-wide metadata (title template suffix, default description) and per-page metadata to leather-goods/bags copy for the real company (Pingyang Jinweilong / HOKA GROUP). Replace 'Minty Apparel', 'Custom Apparel', 'Print-On-Demand', 'tees/hoodies/caps' wording throughout the metadata layer.",
+          "evidence": "curl titles: homepage 'Minty Apparel — Custom Apparel Manufacturer for Global Brands'; /products 'Products — Custom Apparel Catalog — Minty Apparel' desc mentions 'tees, hoodies, caps and activewear'; /privacy & /terms desc = 'custom Print-On-Demand apparel'."
+        },
+        {
+          "title": "Homepage hero and body copy is apparel-themed placeholder mixed with bags",
+          "severity": "high",
+          "detail": "The homepage H1 is '<h1 ...>Custom Apparel, Factory-Direct</h1>'. Body text mixes apparel and bags: keyword counts on the homepage HTML — 'Apparel' 25, 'Print-On-Demand' 22, 'hoodie' 14, 'POD' 14, 'custom apparel' 12, alongside 'Bag' 24 and 'Leather' 12. A first-time visitor sees an apparel hero for a bag store, which is confusing and off-brand.",
+          "suggestion": "Rewrite the hero H1 and homepage sections to lead with leather bags (women's/kids' bags, MOQ 1000, factory-direct). Remove hoodie/tee/POD placeholder copy.",
+          "evidence": "curl homepage H1 = 'Custom Apparel, Factory-Direct'; grep counts: Apparel 25, Print-On-Demand 22, hoodie 14, POD 14 vs Bag 24, Leather 12."
+        },
+        {
+          "title": "Nav label 'Custom POD' is placeholder",
+          "severity": "medium",
+          "detail": "The primary nav shows a link labeled 'Custom POD' (it targets /custom-order, whose page title is also 'Custom POD — How It Works'). For a leather-bag factory this label is misleading; expected something like 'Custom Orders' or 'Customization'.",
+          "suggestion": "Rename the nav item and the /custom-order page title/H1 from 'Custom POD' to a bag-appropriate label (e.g. 'Custom Orders').",
+          "evidence": "Homepage nav anchor text set: About, Contact, Custom POD, Products, Showcase. /custom-order <title> = 'Custom POD — How It Works — Minty Apparel'."
+        },
+        {
+          "title": "/about and /showcase content is apparel/streetwear-themed",
+          "severity": "medium",
+          "detail": "/about copy is dominated by apparel wording (Apparel 17, apparel 11) with only 2 'leather' mentions; factory stats read generic (‘20 years’, ‘12,000m²’) but the surrounding narrative is apparel. /showcase describes 'Streetwear' projects (Streetwear/streetwear 11 combined, Apparel/apparel 28) rather than bag clients. Per project memory the real business is a leather/belt factory (HOKA GROUP), so this is placeholder content.",
+          "suggestion": "Replace /about and /showcase narrative and case studies with leather-goods/bags content reflecting the real factory; verify the factory stats (20 years, 12,000m²) are accurate for the real company.",
+          "evidence": "/about grep: Apparel 17, apparel 11, leather 2, '20 years' 3, '12,000m²' 2. /showcase grep: Apparel/apparel 28, Streetwear/streetwear 11, leather 2."
+        },
+        {
+          "title": "404 page reuses the apparel homepage <title>",
+          "severity": "low",
+          "detail": "A non-existent URL returns HTTP 404 and renders proper 'not found' body content, but its <title> is the homepage/apparel title 'Minty Apparel — Custom Apparel Manufacturer for Global Brands' rather than a '404 / Page Not Found' title. Minor SEO/UX polish.",
+          "suggestion": "Add a dedicated not-found metadata title (e.g. '404 — Page Not Found — <brand>').",
+          "evidence": "curl http://localhost:3000/does-not-exist-xyz -> HTTP 404, <title>Minty Apparel — Custom Apparel Manufacturer for Global Brands</title>, body contains '404'/'not found'/'Back to'."
+        },
+        {
+          "title": "Missing og:image and canonical link tags",
+          "severity": "low",
+          "detail": "Homepage has og:title/og:description and twitter:description but no og:image and no <link rel=\"canonical\">. og:image absence means social shares render without a preview image; missing canonical is a minor SEO gap.",
+          "suggestion": "Add a default og:image (e.g. a hero bag photo) and canonical URLs to the metadata configuration.",
+          "evidence": "grep for 'og:image' and 'rel=\"canonical\"' on homepage HTML returned no matches; only robots and lang were found besides og:title/description."
+        },
+        {
+          "title": "Placeholder WhatsApp contact number",
+          "severity": "low",
+          "detail": "WhatsApp CTA links use a clearly fake number 8613800000000 and apparel-themed prefilled text (e.g. \"I'm interested in custom apparel\"). Present on homepage and /contact.",
+          "suggestion": "Replace with the real WhatsApp number and bag-appropriate prefill text before launch.",
+          "evidence": "Homepage/contact hrefs: https://wa.me/8613800000000?text=Hi%20Minty!%20I'm%20interested%20in%20custom%20apparel.%20(from%20%2Fcontact)"
+        }
+      ],
+      "rating": 4
+    },
+    {
+      "role": "tester",
+      "area": "search-catalog",
+      "summary": "The product-search API (GET /api/v1/products) is functional and robust: keyword search is case-insensitive, matches across name/description/specs/keywords/category, returns clean empty results for non-existent terms, safely handles injection attempts, and pagination is correct with no overlap. Category filters work (womens-bags=55, kids-bags=41, total=96). HOWEVER two significant defects exist: (1) the /products catalog page does NOT wire up keyword search at all — the page component only reads searchParams.category and silently ignores ?q=, so API search relevance never reaches users on the catalog page, and there is no search box in the site UI (only in the Mia chat widget); (2) Chinese-language search (女包, 包, 儿童, 背包) returns 0 results despite the business being a Chinese factory. Also: unescaped SQL LIKE wildcards let a literal \"%\" or \"_\" query match ALL 96 products, and the catalog page copy/metadata is still apparel placeholder (\"Custom Apparel Catalog\", \"tees, hoodies, caps\"). Tested via ~40 live curl requests against localhost:3000 plus reading the route.ts and page.tsx source.",
+      "positives": [
+        "Keyword search returns relevant, high-quality results: q=backpack=22, q=crossbody=44, q=floral=7, q=fox=1 ('Mini Fox Face Crossbody Bag in Pink PU'), q=tote bag=8. Rich keyword field does real work — synonyms handbag=42, purse=45, shoulder=59 match beyond literal names.",
+        "Case-insensitivity works perfectly: q=Backpack, q=BACKPACK, q=backpack all return identical total=22; q=CrossBody = q=crossbody = 44. SKU search case-insensitive too (HJ-BW100001 and hj-bw100001 both return 1).",
+        "Empty query (q=) and whitespace-only query (q=%20%20%20) correctly fall back to all 96 products via .trim(); leading/trailing spaces trimmed (q=' backpack '=22).",
+        "Non-existent term (q=xyzzy123) returns a clean code=200, total=0, empty items array — no error, no crash.",
+        "SKU search works: exact SKU HJ-BW100001 returns 1 correct product; partial prefix q=BW1000 returns all 55 women's bags.",
+        "Injection/XSS attempts handled safely: q=<script>alert(1)</script> and q=' OR '1'='1 return total=0 (Prisma parameterizes; no SQL injection, no reflected script execution at API level).",
+        "Pagination is correct with NO overlap: womens-bags at pageSize=20 across pages 1-3 yields ids 101-155 (55 unique, 0 duplicates), page 4 empty. Verified union of all pages = exactly the unique set.",
+        "Pagination params robustly clamped: page=0/-5/abc -> page 1; page=9999 -> empty (no error); pageSize=100/1000 -> capped at 50; pageSize=0/abc -> default 12; pageSize=-10 -> 1.",
+        "Category filters accurate and server-rendered: ?category=womens-bags=55, ?category=kids-bags=41 (sum=96=total), ?category=foobar=0. Combined category+q works (womens-bags+backpack=8). /products?category=kids-bags renders a genuinely smaller HTML page (159KB vs 340KB).",
+        "Product detail pages and images work: /products/hj-bk200001 -> 200, image /products/HJ-BK200001.png -> 200 image/png 784KB. MOQ 1000 and 'Contact for pricing' render as expected."
+      ],
+      "issues": [
+        {
+          "title": "Catalog /products page ignores ?q= keyword search entirely (no server-side search, no search box in UI)",
+          "severity": "high",
+          "detail": "The API supports keyword search, but the /products page component (src/app/products/page.tsx) only destructures searchParams.category and never reads q. Live proof: /products?q=fox, /products?q=xyzzy123, and /products?q=backpack all return the SAME full page (~340,600 bytes, all 88 'Backpack' occurrences, all 96 SKUs embedded in HTML) — identical to unfiltered /products. Meanwhile ?category= DOES filter server-side (kids-bags renders 159KB). Grepping src for search UI (type=search, placeholder=Search, role=search) finds hits ONLY in mia-widget.tsx / lib/mia.ts (the chatbot), not in the header/nav or catalog. So a human browsing the catalog has no way to run the keyword search the API exposes, and shared/bookmarked search URLs plus no-JS crawlers see all 96 products instead of filtered results.",
+          "evidence": "curl /products?q=fox -> 340633 bytes, 'Fox Face' x1 (in embedded JSON, not a filtered grid); curl /products?q=xyzzy123 -> 340600 bytes (full page, not empty state); page.tsx: `searchParams: { category?: string }` and `const active = searchParams.category;` — no q handling anywhere.",
+          "suggestion": "Wire the q param into ProductsPage: read searchParams.q, pass it to the product query, add a visible search input in the catalog header (and/or site nav) that navigates to /products?q=..., and render the empty-search state when q yields no matches."
+        },
+        {
+          "title": "Chinese-language search returns zero results despite Chinese-factory target market",
+          "severity": "medium",
+          "detail": "Every Chinese query tested returns total=0: 女包 (women's bags), 包 (bag), 儿童 (kids), 背包 (backpack), 手提 (handbag). The keyword/description/name fields contain only English, so LIKE-based matching cannot find Chinese terms. For a Pingyang/HOKA leather factory whose buyers or the Mia assistant may search in Chinese, this is a relevance gap. (Note: this is a data/content coverage issue, not an encoding bug — UTF-8 queries are transmitted fine; there simply is no Chinese text to match.)",
+          "evidence": "q=%E5%A5%B3%E5%8C%85 (女包)->total=0; q=%E5%8C%85 (包)->0; 儿童->0; 背包->0; 手提->0. English equivalents work: backpack=22, handbag=42, bag=96.",
+          "suggestion": "Add Chinese keywords/aliases to the product keywords field (or a locale-aware keyword column) so bilingual search works, at minimum for high-level category terms (女包/童包/背包/手提包/斜挎包/钱包)."
+        },
+        {
+          "title": "Unescaped SQL LIKE wildcards: literal '%' or '_' query matches ALL products",
+          "severity": "medium",
+          "detail": "Prisma `contains` injects the raw query into a SQLite LIKE pattern without escaping % or _. So a user typing a bare '%' or '_' gets total=96 (matches everything) instead of a literal search or no results. q=a%b also returns 96 (matches any text containing 'a'...'b'). Not a security hole (Prisma still parameterizes — no injection), but it is a search-correctness bug producing nonsensical 'match everything' output for special-character queries.",
+          "evidence": "q=%25 (single percent) -> total=96 returned=50; q=%25%25 -> 96; q=_ -> 96; q=a%25b -> 96. Compare q=xyzzy123 -> 0 (normal).",
+          "suggestion": "Escape LIKE metacharacters (%, _, and the escape char) in q before passing to Prisma contains, or use a raw query with an ESCAPE clause, so special chars are treated as literals."
+        },
+        {
+          "title": "Catalog page copy and metadata still apparel placeholder (wrong for a bags catalog)",
+          "severity": "medium",
+          "detail": "The /products page renders stale apparel marketing: metadata title 'Products — Custom Apparel Catalog', description 'premium blanks: tees, hoodies, caps and activewear, ready for custom POD', page heading 'Custom apparel, built for your brand', subtitle 'Every style below is a customizable blank — add your prints, labels and packaging'. The catalog now sells leather bags, so this misrepresents the product line and hurts SEO/relevance for bag searchers. The rendered HTML also contains 'Apparel' x19+13, 'Print-On-Demand' x6, 'Custom POD' x3+2. Detail page <title> shows '… — Minty Apparel'.",
+          "evidence": "page.tsx metadata: title 'Products — Custom Apparel Catalog'; SectionHeading title 'Custom apparel, built for your brand'. curl /products HTML: 'apparel' 32 occurrences, 'Print-On-Demand' x6. Detail: 'Fox Face Crossbody Bag in Pink PU — Minty Apparel'.",
+          "suggestion": "Update products page metadata, heading, and subtitle to bag-focused copy (e.g., 'Custom Leather & PU Bags — Wholesale Catalog'), and sweep remaining apparel/POD strings across the site."
+        },
+        {
+          "title": "No tokenization: multi-word/reordered queries fail (substring-only matching)",
+          "severity": "low",
+          "detail": "Search is a single substring LIKE, not tokenized. 'tote bag' (one space) works (8) but 'tote  bag' (two spaces) returns 0, and reordered phrases like 'bag tote' would miss. Users whose word order or spacing differs from stored text get no results even when the item clearly matches.",
+          "evidence": "q=tote%20bag -> total=8; q=tote%20%20bag (2 spaces) -> total=0.",
+          "suggestion": "Split q on whitespace into tokens and AND them (each token contains-matched against the fields), or collapse repeated whitespace, so word order and extra spaces don't zero out results."
+        },
+        {
+          "title": "pageSize float value echoed unfloored in response metadata",
+          "severity": "low",
+          "detail": "pageSize=5.7 returns 5 items (Prisma take truncates) but the response echoes pageSize: 5.7 rather than 5. Cosmetic inconsistency between the echoed pageSize and the actual page size, which could confuse a client computing total pages.",
+          "evidence": "curl ?pageSize=5.7 -> {page:1, pageSize:5.7, returned:5}.",
+          "suggestion": "Math.floor the parsed pageSize (and page) before use and before echoing in the response."
+        }
+      ],
+      "rating": 3
+    },
+    {
+      "role": "tester",
+      "area": "forms-apis",
+      "summary": "I exercised all four write/read APIs against the live server at http://localhost:3000 with valid and invalid payloads, then cross-checked the source under .../minty/minty/src to confirm behavior and UI wiring.\n\nHeadline results: (1) POST /api/v1/inquiries is well-built and correctly wired to the visible inquiry form — full zod validation, consistent {code,message,data} envelope, and a working per-IP rate limit (429 after 5/hour). (2) POST /api/v1/events works and is wired to the site-wide analytics tracker (track.ts). (3) POST /api/v1/newsletter/subscribe and GET /api/v1/promotions are hardcoded 501 \"Not Implemented\" Phase-2 stubs — but critically, NEITHER is referenced anywhere in the UI (no newsletter/subscribe/promotion strings in any .tsx/.ts), so a real user CANNOT reach these 501s. They are dormant, not user-facing failures. (4) A minor envelope-consistency gap: wrong-method requests (e.g. GET on newsletter, POST on promotions, GET on inquiries) return HTTP 405 with an EMPTY body instead of the {code,message,data} envelope. Not user-facing. No unexpected 5xx were triggered anywhere.",
+      "positives": [
+        "POST /api/v1/inquiries validation is robust and evidence-backed: missing name -> 400 {\"data\":{\"name\":[\"Required\"]}}; bad email -> 400 {\"data\":{\"email\":[\"Please enter a valid email\"]}}; empty {} -> 400 with both name+email errors; malformed JSON -> 400 {\"message\":\"Invalid JSON body\"}. Valid payload -> 200 {\"code\":200,\"message\":\"Inquiry received\",\"data\":{\"id\":N}}.",
+        "Inquiries rate limiting actually works and is reachable: fired 7 rapid valid submissions from one IP, attempts 1-5 returned 200, attempts 6-7 returned 429 {\"code\":429,\"message\":\"Too many submissions. Please try again later.\"} (rateLimit key inquiry:<ip>, 5/hour). Envelope stays consistent even on 429.",
+        "Inquiries endpoint is correctly wired to the visible UI: src/components/inquiry-form.tsx line 78 POSTs to /api/v1/inquiries, does client-side validation first (name/email), and surfaces json.message as serverError on !res.ok — so server 400/429 messages are shown to the user gracefully.",
+        "POST /api/v1/events works and is wired to real UX: valid {\"eventName\":\"product_view\",...} -> 200 {\"data\":{\"received\":true}}; missing eventName -> 400 {\"data\":{\"eventName\":[\"Required\"]}}. src/lib/track.ts sends via navigator.sendBeacon/fetch on every trackEvent call. Confirmed the endpoint accepts both Content-Type: application/json AND text/plain;charset=UTF-8 (the type sendBeacon can use) -> both 200, so beacon analytics won't silently 4xx.",
+        "Events endpoint is intentionally fail-safe: DB write is wrapped in try/catch that swallows errors and always returns 200 (code comment: 'analytics must never disrupt the client'). Good design — an analytics DB hiccup can't break page loads.",
+        "Error envelope is consistent across all JSON responses via src/lib/api.ts ok()/fail() helpers: every observed body was {code,message,data} with HTTP status == code. 501 and 429 bodies both conform.",
+        "The two unimplemented endpoints (newsletter/subscribe 501, promotions 501) are genuinely dormant: grep of all .tsx/.ts in src found ZERO references to 'newsletter', 'subscribe', or 'promotion' outside their own route files — so there is no button/form a user can click to trigger the 501. Risk to end users is effectively nil."
+      ],
+      "issues": [
+        {
+          "title": "POST /api/v1/newsletter/subscribe always returns 501 Not Implemented",
+          "severity": "low",
+          "detail": "The endpoint is a hardcoded stub: src/app/api/v1/newsletter/subscribe/route.ts just does `return fail(501, \"Not Implemented\")`. Validation was tested and is absent by design — {} and {\"email\":\"garbage\"} both return 501, not 400. However, this is NOT wired to any UI: a full grep of src for 'newsletter'/'subscribe' found no client references. So no user can currently hit it.",
+          "evidence": "curl -X POST .../api/v1/newsletter/subscribe -d '{}' -> HTTP 501 {\"code\":501,\"message\":\"Not Implemented\",\"data\":null}. Same for {\"email\":\"garbage\"}. Source is a 6-line Phase-2 stub. grep 'newsletter|subscribe' in src/*.tsx,*.ts = no UI hits.",
+          "suggestion": "Fine to leave as a Phase-2 stub since it's unreachable. If/when a newsletter signup form is added to the footer, implement validation + persistence first, or the form will show a hard failure. Consider a 200 no-op or a clearer 'coming soon' contract if any UI is planned before Phase 2."
+        },
+        {
+          "title": "GET /api/v1/promotions always returns 501 Not Implemented",
+          "severity": "low",
+          "detail": "src/app/api/v1/promotions/route.ts is a stub returning fail(501). No UI consumes it (no 'promotion' string anywhere in src components/pages), so no user-facing failure. Flagging only for completeness since the endpoint exists and advertises a promotions feature that isn't there.",
+          "evidence": "curl .../api/v1/promotions -> HTTP 501 {\"code\":501,\"message\":\"Not Implemented\",\"data\":null}. grep 'promotion' in src = no hits.",
+          "suggestion": "Leave as-is until Phase 2, or return an empty list 200 {\"data\":{\"items\":[]}} so any future consumer degrades gracefully rather than erroring."
+        },
+        {
+          "title": "Wrong-method (405) responses return an empty body, breaking the {code,message,data} envelope contract",
+          "severity": "low",
+          "detail": "Endpoints only export the intended verb, so calling the wrong method hits Next.js's default 405 handler, which returns an EMPTY body (no JSON envelope). Verified on GET /newsletter/subscribe, POST /promotions, and GET /inquiries. Inconsistent with the §5.1 unified envelope used everywhere else. Not user-facing (the UI always uses correct verbs), but any API client relying on parsing {code,message} would get a JSON parse error on 405.",
+          "evidence": "curl GET .../newsletter/subscribe -> HTTP/1.1 405 Method Not Allowed, body:[] (empty). curl -X POST .../promotions -> 405 empty body. curl GET .../inquiries -> HTTP 405, empty body.",
+          "suggestion": "Optional: add explicit method handlers (or a shared 405 wrapper) that return fail(405, \"Method Not Allowed\") so 405s carry the same envelope. Low priority given no UI dependency."
+        },
+        {
+          "title": "Inquiry 'message' field is optional server-side — silent contract mismatch with the form's 'Project details' emphasis",
+          "severity": "low",
+          "detail": "inquirySchema (src/lib/validation.ts) marks message optional; POST with {\"name\":\"Bob\",\"email\":\"a@b.com\"} and no message returns 200 and creates inquiry id 4. The UI form also treats it as optional (no client validation on message), so behavior is CONSISTENT between form and API — not a bug per se. Noting because a lead can be submitted with zero project detail, which may produce low-value CRM records.",
+          "evidence": "curl POST /inquiries -d '{\"name\":\"Bob\",\"email\":\"a@b.com\"}' -> 200 {\"message\":\"Inquiry received\",\"data\":{\"id\":4}}. validation.ts line 12: message ... .optional(). inquiry-form.tsx validate() checks only name+email.",
+          "suggestion": "Product decision, not a defect: if a message/quantity should be required for quality leads, add it to both zod schema and the form's validate(). Otherwise no action needed."
+        }
+      ],
+      "rating": 4
+    },
+    {
+      "role": "tester",
+      "area": "product-data",
+      "summary": "Data integrity across the 96-product bag catalog is strong. I sampled 14 products via the API (GET /api/v1/products) and 6 /products/<slug> detail pages, HTTP-checked all 96 images, and visually read 3 images. Every one of the 96 images loads (HTTP 200, Content-Type image/png, 188 KB-2.1 MB, no zero-byte/placeholder files). API data is uniform and clean: total=96 (55 women's HJ-BW1000xx + 41 kids' HJ-BK2000xx), all moq=1000, all priceTiers=[] (consistent with \"Contact for pricing\"), no duplicate slugs or image paths. Detail pages carry rich, product-specific specs (Type / Material / Dimensions / Colors / SKU) and accurate descriptions; three images I opened matched their names and spec colors exactly (quilted black backpack, pink fox-face crossbody, pink corduroy 'girl gang' belt bag). Keyword search works beyond the display name (q=vegan->68, school->46, crossbody->44). The main problems are NOT in the bag data itself but in presentation: the detail-page title still says \"Minty Apparel\" and the pages are riddled with apparel/POD placeholder copy; the MOQ value is shown on listing cards but is absent from detail pages; detail routing is case-sensitive (uppercase SKU 404s); and keyword search is over-inclusive.",
+      "positives": [
+        "All 96 product images load: scripted curl over every SKU (HJ-BW100001-055, HJ-BK200001-041) returned HTTP 200 for 96/96, Content-Type image/png, Content-Length 188631-2123779 bytes (e.g. HJ-BW100055=188631, HJ-BK200005=2123779) - no missing or empty placeholder images.",
+        "Three visually-inspected images are real, high-quality photos that match their catalog data: HJ-BW100001 = black quilted leather-look mini backpack w/ gold hardware + front zip (matches name+desc); HJ-BK200001 = pink fox-face crossbody with white/marbled cheeks + gold trim (matches spec colors 'pink, white, gold'); HJ-BK200005 = pink corduroy belt bag with star patches + 'girl gang' patch (matches name).",
+        "API data uniform and consistent: GET /api/v1/products total=96 across 2 pages; grep confirms all 96 have moq:1000 and all 96 have priceTiers:[] (empty), consistent with the 'Contact for pricing' display. No duplicate slugs and no duplicate image paths (uniq -d returned nothing).",
+        "Detail pages carry rich, per-product specs, not boilerplate: e.g. HJ-BW100001 'Type: backpack | Material: PU leather (vegan leather) | Dimensions: 20*13*23 cm | Colors: black, gold | SKU: HJ-BW100001'; HJ-BK200041 correctly shows 'Material: 100% polyester' for a velvet bag (not copy-pasted PU leather), proving specs are accurate per item.",
+        "Keyword search works beyond the visible product name: q=vegan->total 68, q=school->46, q=crossbody->44, q=quilted->11, q=fox->1, q=corduroy->1 - confirming the hidden rich-keyword index is populated and functional. Nonsense query (q=xyzzynonexistent) correctly returns total:0 with HTTP 200.",
+        "Product listing page (/products) renders correctly: exactly 96 'MOQ 1000' labels and category labels for both 'Women's Bags' and 'Kids' Bags'; special characters are properly HTML-escaped (&amp; in 'Star-Print &amp; Glitter... (Set of 3)', &#x27; in 'Girl Gang', 'Girls'', 'Kids''). No real price/currency leaked (the 6 '$' hits are SVG path coordinates, not prices).",
+        "Detail page routing behaves: valid lowercase slugs (hj-bw100001, hj-bk200001, hj-bw100005, hj-bk200005, hj-bw100055, hj-bk200041) all return HTTP 200; an invalid slug returns a clean HTTP 404."
+      ],
+      "issues": [
+        {
+          "title": "MOQ value (1000) is not shown on product detail pages",
+          "severity": "medium",
+          "detail": "The task expects 'MOQ shown' on the detail page. On /products/<slug> the only commercial info rendered is 'Contact for pricing' plus the Specifications line (Type/Material/Dimensions/Colors/SKU). The MOQ number appears NOWHERE on the detail page - grep for MOQ/1,000/1000 in context found only the 'Flexible MOQ' apparel placeholder and image srcset widths, never a real '1,000' MOQ value. Yet the API returns moq:1000 for the product and the /products listing cards DO show 'MOQ 1000'. So the data exists and is displayed in the grid but is dropped on the detail page, an inconsistency between catalog data and the detail view.",
+          "evidence": "detail_bw1.html (HJ-BW100001): 'Contact for pricing' present, Specifications present, but grep -iE '(MOQ|minimum order)[^0-9]{0,60}(1[,.]?000|1000)' returned nothing; same on detail_bk1.html and detail_bw5.html (MOQ label count on those pages =1, but it is the 'Flexible MOQ' placeholder, and '1,000' count =0). Listing page: grep 'MOQ <!-- -->1000' = 96 matches. API: \"moq\":1000 for all 96.",
+          "suggestion": "Render the product's MOQ (e.g. 'MOQ: 1,000 units') on the detail page near 'Contact for pricing', so the detail view matches the listing cards and the underlying data."
+        },
+        {
+          "title": "Detail page <title> and body still say 'Minty Apparel' / POD apparel on bag products",
+          "severity": "medium",
+          "detail": "Every product detail page's HTML <title> reads 'Minty Apparel' even though the catalog is now leather BAGS. The body is also full of apparel/POD placeholder copy on bag product pages: 'direct partner for custom Print-On-Demand apparel', 'full POD customization', 'apparel concierge', filter chips 'Hoodies / T-Shirts / POD Customization', nav 'Custom POD', footer 'Minty Apparel. All rights reserved', 'global B2B apparel sourcing'. This is placeholder leakage that contradicts the actual bag products on the same page and hurts SEO (page/browser-tab title and meta all say 'Apparel').",
+          "evidence": "detail_bw1: '<title>Quilted Leather-Look Mini Backpack — Minty Apparel</title>'; detail_bk1: '<title>Mini Fox Face Crossbody Bag in Pink PU — Minty Apparel</title>'; detail_bw55: '...Glossy Black PU — Minty Apparel'. grep found 'custom Print-On-Demand apparel. Flexible MOQ...full POD customization', 'apparel concierge', 'Hoodies'/'T-Shirts'/'POD Customization' buttons, 'built for global B2B apparel sourcing.'",
+          "suggestion": "Replace 'Apparel'/'POD' branding and copy site-wide with bag/leather-goods terms (e.g. 'Minty' or 'Minty Leather'), fix the <title> template, meta description, footer, nav 'Custom POD', and the Mia chatbot/filter placeholder chips (Hoodies/T-Shirts -> Backpacks/Crossbody/Totes)."
+        },
+        {
+          "title": "Detail-page routing is case-sensitive; uppercase SKU form 404s",
+          "severity": "low",
+          "detail": "The slug route only accepts the lowercase slug (hj-bw100001). The uppercase SKU form (HJ-BW100001), which is exactly how the image path and the on-page 'SKU:' label are spelled, returns 404. Since customers see the uppercase SKU on the page and in the image URL, typing/pasting it into /products/HJ-BW100001 fails, which is a mild UX/consistency trap.",
+          "evidence": "curl -o /dev/null -w %{http_code}: /products/hj-bw100001 -> 200; /products/HJ-BW100001 -> 404. On-page label: 'SKU: HJ-BW100001' (uppercase); image path /products/HJ-BW100001.png (uppercase).",
+          "suggestion": "Make the slug lookup case-insensitive (lowercase the incoming param before matching) or 301-redirect the uppercase SKU form to the canonical lowercase slug."
+        },
+        {
+          "title": "Keyword search is over-inclusive / low precision",
+          "severity": "low",
+          "detail": "The hidden keyword index is broad enough that generic queries return many unrelated products. q=school returns 46 results including plain 'Quilted Leather-Look Mini Backpack' and 'Large Striped Slogan Print PU Tote Bag' (not school bags). q=cat returns 22 including 'Black Chain Envelope Clutch', 'Basketball Pocket Kids Backpack', and 'Mini Airplane Travel Shoulder Bag' which are not cat-themed. Genuine cat products (Cat Ear Backpack, Cat Face bags) are mixed in with false-ish positives, so buyers searching a specific motif get noisy results.",
+          "evidence": "curl /api/v1/products?q=school -> total 46 (sample names include 'Quilted Leather-Look Mini Backpack', 'Woven-Texture Bee Motif Mini Backpack'); q=cat -> total 22 (sample includes 'Black Chain Envelope Clutch','Basketball Pocket Kids Backpack','Mini Airplane Travel Shoulder Bag').",
+          "suggestion": "Tighten keyword tagging so generic/aspirational terms (school, everyday, cat) are only applied to genuinely relevant products, or rank exact name/spec matches above keyword-only matches so the most relevant items surface first."
+        },
+        {
+          "title": "API ignores pageSize>50 (silently caps at 50), so ?pageSize=100 example returns partial data",
+          "severity": "low",
+          "detail": "The documented example uses pageSize=100, but the API silently caps pageSize at 50: requesting pageSize=100 or 500 both return pageSize:50 with only 50 of the 96 items on page 1. A client that assumes pageSize=100 gives everything will miss 46 products unless it paginates. pageSize=0 falls back to a default of 12 rather than erroring. Not a data-corruption bug, but a data-completeness/contract mismatch worth documenting or fixing.",
+          "evidence": "curl /api/v1/products?pageSize=100 -> data.pageSize:50, items length 50, total 96. curl ?pageSize=500 -> \"pageSize\":50,\"total\":96. curl ?pageSize=0 -> \"pageSize\":12,\"total\":96. Full catalog only retrievable via page=1 + page=2.",
+          "suggestion": "Either honor larger pageSize values (up to total) or clamp-and-document the max=50 in the API response/message so consumers know to paginate; validate pageSize=0/negative explicitly."
+        }
+      ],
+      "rating": 4
+    },
+    {
+      "role": "tester",
+      "area": "mia-concierge",
+      "summary": "Mia is a front-end-only concierge (persona + skills in src/lib/mia.ts, shared state in use-mia-chat.ts, rendered by hero-concierge.tsx on / and mia-widget.tsx on /products, results via mia-thread.tsx). On each user message it runs a real product-search skill against GET /api/v1/products?q=…&pageSize=4, and falls back to keyword-matched canned replies (getReply) when nothing matches. I verified the live site (localhost:3000): the search skill correctly returns product hits for real bag terms and the response shape exactly matches ProductHit; canned pricing/MOQ/shipping replies fire; the WhatsApp funnel link is present and correctly encoded in SSR HTML; and the analytics events endpoint accepts Mia's events. However the concierge has a serious first-impression defect (all four default quick-reply buttons return zero search results), a search-matching gap (plurals never match; the token \"bags\" breaks multi-word queries), pervasive apparel-themed copy on a bags catalog, a factually wrong MOQ in a canned reply (says \"as low as 50 pcs\" while the real MOQ is 1000), and several accessibility gaps (hover-to-expand with no keyboard/touch parity on the widget, autoplaying video, no aria-live on the chat thread).",
+      "positives": [
+        "Search skill returns real product hits with the exact shape Mia consumes. Evidence: GET /api/v1/products?q=backpack&pageSize=4 -> {code:200,...,data.items:[{slug:'hj-bw100001',name:'Quilted Leather-Look Mini Backpack',category:\"Women's Bags\",moq:1000,priceTiers:[],image:'/products/HJ-BW100001.png'}...],total:22}. Also tote=8, crossbody=44, purse=45, kids backpack=14, bag=96.",
+        "Product-hit cards are fully wired end-to-end. Thumbnail /products/HJ-BW100001.png -> 200, and the detail link /products/hj-bw100001 -> 200, so tapping a hit reaches a real page. fromPrice([]) returns 'Contact for pricing', which is the correct/consistent display given every product has empty priceTiers.",
+        "Canned replies for the key intents work via getReply fallback. 'MOQ & pricing' searches (0 hits) then correctly falls to the /moq|minimum/ reply; pricing, sample, and shipping intents each match dedicated regexes in src/lib/mia.ts lines 41-55.",
+        "WhatsApp funnel link is present and correctly encoded in the server-rendered homepage HTML: href=\"https://wa.me/8613800000000?text=Hi%20Minty!%20I%20just%20chatted%20with%20Mia%20on%20your%20homepage.\" with target=_blank rel=noopener noreferrer, and it fires trackEvent('whatsapp_click', {button_location:'hero_concierge'}).",
+        "Analytics for the concierge is functional and non-blocking. POST /api/v1/events with Mia's 'search' payload returned {code:200,data:{received:true}}; trackEvent fires 'search' (with search_term/results/position), 'cta_click' (concierge_send, mia_widget_open, mia_product_hit) and swallows errors so analytics never breaks UX.",
+        "Good baseline accessibility touches: Send button has aria-label and disabled state, Close buttons have aria-label='Close chat', inputs have aria-label, the collapsed widget avatar and hero clerk expose aria-expanded, and the marquee background is aria-hidden. Mia renders in SSR HTML on both / and /products, and the digital-clerk assets (digital-clerk.mp4, digital-clerk-poster.jpg) both return 200.",
+        "Reasonable search hygiene: looksSearchable() skips greetings/thanks so 'hi'/'thanks' go straight to a canned reply instead of a pointless search, and toQuery() strips filler words (show/me/some/please/etc.) before querying."
+      ],
+      "issues": [
+        {
+          "title": "All four default quick-reply buttons return zero product results",
+          "severity": "high",
+          "detail": "QUICK_REPLIES in src/lib/mia.ts are ['Search hoodies','MOQ & pricing','Request a sample','Shipping & lead time'] and are the first thing every visitor sees in both the hero concierge and the /products widget. Tapping one calls send(q), which for a searchable phrase hits the products API first. I ran each through Mia's exact path: 'Search hoodies'->q=hoodies->total:0; 'MOQ & pricing'->q='moq & pricing'->total:0; 'Request a sample'->q='request sample'->total:0; 'Shipping & lead time'->q='shipping & lead time'->total:0. So the single most prominent, guided entry point never surfaces a single product. 'Search hoodies' is doubly broken: hoodies do not exist in a bags catalog, and it then falls to getReply which cheerfully offers to 'produce that in-house with full customization'.",
+          "evidence": "curl 'http://localhost:3000/api/v1/products?q=hoodies&pageSize=4' -> \"total\":0 ; q='moq & pricing' -> \"total\":0 ; q='request sample' -> \"total\":0 ; q='shipping & lead time' -> \"total\":0. Contrast q=backpack -> total:22.",
+          "suggestion": "Replace the quick replies with real bag intents that actually return hits, e.g. 'Search backpacks'->use singular 'backpack', 'Kids bags', 'Crossbody bags'->'crossbody', plus keep 'MOQ & pricing' and 'Shipping'. Verify each chip against the API before shipping."
+        },
+        {
+          "title": "Plural search terms never match, so most natural user queries fail",
+          "severity": "high",
+          "detail": "toQuery() strips filler words but does not singularize, and the products API does substring/keyword matching that is not plural-aware. Users overwhelmingly type plurals ('backpacks','totes','purses','wallets'). Every plural I tested returned 0 while its singular returned many hits. This silently converts real product interest into a canned 'I'll pass this to our team' fallback.",
+          "evidence": "backpack=22 vs backpacks=0; tote=8 vs totes=0; purse=45 vs purses=0; wallet=1 vs wallets=0; crossbody=44 vs crossbodys=0 (clutch=5 vs clutches=1). All via GET /api/v1/products?q=<term>&pageSize=4.",
+          "suggestion": "Singularize query tokens in toQuery() (strip trailing s/es) or make the API match stems, and/or retry the search with the singular form when the plural returns 0 before falling back to a canned reply."
+        },
+        {
+          "title": "The token 'bags' breaks multi-word searches (AND semantics + no plural match)",
+          "severity": "medium",
+          "detail": "Multi-word queries appear to require every token to match, but the plural 'bags' matches nothing, so any natural phrase ending in 'bags' returns zero even though the singular phrase works. This compounds the plural bug for the most obvious phrasing on a bags site.",
+          "evidence": "q='tote bag' -> total:8 but q='tote bags' -> total:0; q='backpack bag' -> total:0. (q='bag' alone -> 96, q='bags' alone -> 96, so 'bags' only fails when combined with another required token.)",
+          "suggestion": "Drop or singularize a trailing 'bag/bags' token, or switch multi-word matching to OR/best-effort ranking so 'tote bags' still returns totes."
+        },
+        {
+          "title": "Concierge copy is entirely apparel-themed on a bags catalog",
+          "severity": "medium",
+          "detail": "Mia's persona and canned answers still describe an apparel/POD factory. WELCOME says 'your apparel concierge … type a keyword (e.g. \"hoodie\")'; getReply advertises 'Print-On-Demand factory — DTG, screen print, embroidery'; MARQUEE_PHRASES in hero-concierge.tsx say 'Minty Apparel', 'tees, hoodies, caps & activewear'; aria-labels say 'apparel concierge'. This misleads visitors about what the factory makes and is served in SSR HTML.",
+          "evidence": "src/lib/mia.ts lines 12,49,50,51-52; hero-concierge.tsx MARQUEE_PHRASES lines 22-29 and aria-label 'Talk to Mia, your apparel concierge'. Live homepage HTML contains 'Custom Apparel', 'apparel concierge', 'Hover or tap to chat'.",
+          "suggestion": "Rewrite WELCOME, QUICK_REPLIES, getReply branches, MARQUEE_PHRASES and aria-labels for leather bags (e.g. example keyword 'backpack', capabilities: custom leather/PU bags, embossing, hardware, private label)."
+        },
+        {
+          "title": "MOQ canned reply contradicts the real MOQ (says 50 pcs, actual is 1000)",
+          "severity": "medium",
+          "detail": "getReply's MOQ branch tells prospects 'Our MOQ is flexible — as low as 50 pcs for many blanks', but every product in the catalog returns moq:1000 from the API. This is a factual/commercial mismatch that will set wrong buyer expectations and generate unqualified inquiries.",
+          "evidence": "src/lib/mia.ts line 44 ('as low as 50 pcs'); API GET /api/v1/products?q=backpack&pageSize=1 -> \"moq\":1000 (all products).",
+          "suggestion": "Update the MOQ reply to state the real MOQ (1000 pcs) or read it dynamically; keep messaging consistent with product data and the site's stated MOQ 1000."
+        },
+        {
+          "title": "Hover-to-expand with weak keyboard/touch parity and no aria-live",
+          "severity": "medium",
+          "detail": "Both surfaces expand primarily on onMouseEnter. The floating widget (mia-widget.tsx) expands only via onMouseEnter on the container and onFocus on the avatar button; there is no expand on the touch/click of the region until the avatar button itself is tapped, and the whole panel is pointer-events-none/opacity-0 until then, which is fragile on touch and for keyboard users tabbing through. The hero clerk (role='button' div, lines 81-95) mixes onMouseEnter/onClick/onFocus/onKeyDown on a non-native element. Additionally the chat thread (mia-thread.tsx) has no aria-live region, so screen-reader users get no announcement when Mia replies or when product hits appear; and the digital-clerk video autoplays (autoPlay/loop) with no reduced-motion guard.",
+          "evidence": "mia-widget.tsx: container onMouseEnter={expand} (line 37), panel 'pointer-events-none … opacity-0' when closed (line 44), avatar onFocus={expand} (line 120). hero-concierge.tsx: role='button' div with onMouseEnter/onClick/onFocus/onKeyDown (lines 82-91), <video autoPlay muted loop> (lines 108-110). mia-thread.tsx renders messages with no aria-live/role='log'.",
+          "suggestion": "Ensure a click/tap reliably toggles both surfaces open on touch; add role='log' aria-live='polite' to the MiaThread container so replies are announced; add a prefers-reduced-motion guard for the autoplay video; consider making the hero clerk a real <button>."
+        },
+        {
+          "title": "Filler-strip regex corrupts contractions (e.g. \"I'm\" -> \"'m\")",
+          "severity": "low",
+          "detail": "toQuery() strips whole words including 'i', but on 'I'm looking for a kids backpack' the apostrophe leaves a stray \"'m\" token in the query, which can pollute matching. It happened to still work here only because I tested the clean 'kids backpack' form; the raw contraction path yields q=\"'m kids backpack\".",
+          "evidence": "toQuery logic in src/lib/mia.ts lines 67-77 strips \\b(i|...)\\b but not the apostrophe suffix; q=\"'m kids backpack\" -> total:0 whereas q='kids backpack' -> total:14.",
+          "suggestion": "Strip apostrophes/contraction remnants in toQuery (e.g. remove [’'] and standalone 'm/'re/'s tokens) before building the query."
+        }
+      ],
+      "rating": 3
+    }
+  ],
+  "customer": [
+    {
+      "role": "customer",
+      "area": "mom-kids",
+      "summary": "As a mom hunting for a cute bag for my 7-year-old, the actual PRODUCTS delighted me: the kids' bag range is genuinely adorable and the photography is beautiful. The pink fox crossbody (HJ-BK200001), the silver sleepy-bear crossbody with pink pom-pom ears (HJ-BK200013), the black velvet cat-ear backpack (HJ-BK200003), the navy star 'girl gang' backpack (HJ-BK200009) and the pineapple 'Aloha' sequin bag (HJ-BK200029) all made me want to add to cart. Search and filtering mostly work: 'cute' returned 49 results, 'pink' 20+, and the kids-bags category filter returned all 41. BUT the whole experience is built for wholesale buyers, not moms. Every product says 'Contact for pricing' with an MOQ of 1000 units and an inquiry form asking my 'estimated quantity (e.g. 500-1000)'. There is no way to see a price or buy a single bag — I can only 'request a quote.' On top of that the site is confusingly branded: the homepage title and hero say 'Custom Apparel Manufacturer,' product pages mention 'Print-On-Demand apparel' and 'POD,' and nav items are 'Factory'/'Custom Order.' I came for a kid's bag and the site kept telling me it makes custom t-shirts. Delight in the products, real friction in figuring out price/how to buy, and identity confusion throughout.",
+      "positives": [
+        "Kids' bag catalog is genuinely charming and varied — fox faces, cat ears, sleepy bear with pom-pom ears, mermaid sequins, star 'girl gang', pineapple Aloha. My daughter would love several of these (verified by Reading HJ-BK200001, 200003, 200013, 200009, 200029, 200033).",
+        "Product photography is high quality and consistent: clean cream/white backgrounds, well-lit, ~800KB-1.5MB full-res PNGs that all served at HTTP 200.",
+        "Search works well for descriptive terms: q=cute returned 49 hits, q=pink 20+, q=cat 22, q=mermaid 3, q=fox exactly the Fox bag (total:1).",
+        "There IS a search box ('Search products or ask a question…') and category filter chips (kids-bags / womens-bags) on /products; category=kids-bags correctly returns 41.",
+        "Product detail pages load fast (200) with clear breadcrumbs and a working 'Request a quote' CTA; my inquiry POST succeeded (HTTP 200, 'Inquiry received', id 11).",
+        "The homepage 'Featured' grid actually shows real bag products, so the catalog swap did reach the front page."
+      ],
+      "issues": [
+        {
+          "title": "No prices anywhere — every bag says 'Contact for pricing'",
+          "severity": "high",
+          "detail": "As a shopper I cannot make any decision without a price. The API confirms all 41 kids' bags have priceTiers:[] and the rendered pages show 'Contact for pricing' 191 times. I have no idea if a bag is $8 or $80, so I can't compare, budget, or justify reaching out.",
+          "evidence": "curl /api/v1/products?category=kids-bags -> 41x \"priceTiers\":[]; /products page contains 191 'Contact for pricing'.",
+          "suggestion": "Show at least indicative retail or 'from' pricing, or a price range per bag. If it's truly wholesale-only, say so up front so retail shoppers self-select out instead of getting frustrated."
+        },
+        {
+          "title": "MOQ 1000 + wholesale-only means a mom literally cannot buy one bag",
+          "severity": "high",
+          "detail": "I just want ONE bag for my daughter. Every product lists MOQ 1000 and the inquiry form's quantity field is pre-filled with placeholder 'e.g. 500-1000'. There is no cart, no 'buy now', no single-unit path. This site is B2B but presents like a consumer shop, so I wasted time before realizing I'm not the customer.",
+          "evidence": "Product page: MOQ 1000; inquiry form field name=\"estimatedQuantity\" placeholder=\"e.g. 500-1000\"; no add-to-cart/checkout markup found.",
+          "suggestion": "Make the B2B/wholesale nature obvious on the homepage and product pages ('Wholesale / bulk orders only — minimum 1000 units'). If any retail is desired, offer sample ordering."
+        },
+        {
+          "title": "Whole site is still branded as custom APPAREL, not bags",
+          "severity": "high",
+          "detail": "I'm shopping for a leather bag but the homepage title is 'Minty Apparel — Custom Apparel Manufacturer', the hero says 'Custom Apparel, Factory-Direct', and even the kids' bag detail page description says 'Custom Print-On-Demand apparel... full POD customization'. The product tab title reads 'Mini Fox Face Crossbody Bag in Pink PU — Minty Apparel'. This mismatch made me doubt I was in the right place.",
+          "evidence": "<title>Minty Apparel — Custom Apparel Manufacturer...; h1 'Custom Apparel, Factory-Direct'; product meta 'Custom Print-On-Demand apparel. Flexible MOQ, worldwide shipping, full POD customization.'",
+          "suggestion": "Update hero/title/meta and product descriptions to bags/leather goods. Replace apparel-specific copy so the story matches the catalog."
+        },
+        {
+          "title": "'POD' / 'Print-On-Demand' jargon is meaningless to a shopper",
+          "severity": "medium",
+          "detail": "Product pages and footer repeat 'full POD customization' and 'Print-On-Demand'. As a mom this reads like tech jargon and doesn't tell me anything about the bag. It also reinforces the apparel-shop feel.",
+          "evidence": "Product page footer text: 'Custom Print-On-Demand apparel. Flexible MOQ, worldwide shipping, full POD customization.'",
+          "suggestion": "Drop 'POD' from customer-facing copy or explain it in plain language ('we can print your logo/design on the bags')."
+        },
+        {
+          "title": "'unicorn' search returns nothing (and 'horse' too)",
+          "severity": "medium",
+          "detail": "Unicorns are the #1 thing a 7-year-old girl wants. I searched 'unicorn' and got 0 results, and 'horse' 0. There may not be a unicorn bag, but the empty result made me feel the selection was thin right at the moment I was most excited. Meanwhile 'fox', 'cat', 'bear', 'mermaid', 'rainbow' all returned hits.",
+          "evidence": "q=unicorn -> total:0; q=horse -> total:0; q=rainbow -> total:1; q=mermaid -> total:3; q=cat -> total:22.",
+          "suggestion": "Add unicorn products if possible, or map common kid searches (unicorn/rainbow/princess) to related whimsical items, and show a friendly 'no results, try these' suggestion instead of an empty screen."
+        },
+        {
+          "title": "No kids' bags featured on the homepage",
+          "severity": "medium",
+          "detail": "The homepage 'Featured' grid only shows women's bags (hj-bw100001–006). As a mom landing on the home page, nothing signals you sell kids' bags at all — I only found them by clicking into Products and filtering. Combined with the 'Custom Apparel' hero, I nearly bounced.",
+          "evidence": "Homepage featured links all /products/hj-bw1000xx (women's); no hj-bk2000xx present; homepage body has no 'kids'/'children' text near products.",
+          "suggestion": "Feature a few kids' bags on the homepage or add a 'Shop Kids' Bags' entry point in the hero/nav."
+        },
+        {
+          "title": "Newsletter signup and promotions are broken (501)",
+          "severity": "low",
+          "detail": "I tried to subscribe to the newsletter (a natural move to get a discount code) and it silently failed. Promotions also don't load, so there's no visible deal to entice me.",
+          "evidence": "POST /api/v1/newsletter/subscribe -> HTTP 501 'Not Implemented'; GET /api/v1/promotions -> 501 'Not Implemented'.",
+          "suggestion": "Either implement these endpoints or hide the newsletter/promo UI so shoppers don't hit dead ends."
+        }
+      ],
+      "rating": 2.5
+    },
+    {
+      "role": "customer",
+      "area": "wholesale-buyer",
+      "summary": "As a boutique owner scouting a bag supplier, my first impression is split. The product side is genuinely appealing: I browsed 96 real bags (55 women's, 41 kids'), and the photos are professional studio shots on clean backgrounds (I opened HJ-BW100001, a quilted black mini backpack, and HJ-BK200001, a pink fox crossbody — both crisp and true to their descriptions). Each product page gives me material, dimensions, colors, and SKU (e.g. \"PU leather (vegan leather) · 20*13*23 cm · black, gold · HJ-BW100001\"), and I can fire off an inquiry that actually works. But the moment I look past the catalog, trust collapses: the ENTIRE site brands itself as a custom APPAREL / Print-On-Demand factory, not a bag/leather maker. The hero says \"Custom Apparel Manufacturer,\" the About page brags about \"20 years of custom apparel,\" DTG/screen-print/embroidery, and retail clients C&A/TAKKO/Tally Weijl; the Showcase is three apparel case studies; and — the dealbreaker — when I try to request a quote, the \"Interested in\" dropdown only lets me pick T-Shirts, Hoodies, Caps, Activewear. There is no price guidance at all (everything is \"Contact for pricing\"), a hard MOQ of 1000 on every item, no phone number, no physical factory address, and the WhatsApp button uses an obvious fake number (+86 138 0000 0000). I'd request samples out of curiosity because the bags look great, but I would NOT yet trust this as a serious bag factory — the storefront reads like a bag catalog bolted onto an apparel company's website.",
+      "positives": [
+        "Real, sizeable catalog: API reports total 96 products, correctly split 55 womens-bags + 41 kids-bags; category counts add up and filtering works.",
+        "Product photography is excellent and sales-ready. I Read HJ-BW100001.png (clean quilted black mini backpack, gold hardware) and HJ-BK200001.png (pink PU fox crossbody with chain strap) — professional white/neutral background catalog shots that match the product names.",
+        "Every product page carries useful spec detail a buyer needs: material, dimensions, colors, SKU. Sampled 5 SKUs and materials vary sensibly ('PU leather (vegan leather)', '100% polyester', 'polyester with PU trim').",
+        "The inquiry funnel actually works: POST /api/v1/inquiries with valid data returns {code:200,'Inquiry received',id:10}; invalid input is rejected cleanly (missing email -> 400 'email: Required'; bad email -> 400 'Please enter a valid email').",
+        "Search is responsive and honest: q=backpack returns 22 matches; a nonsense query returns an empty list with total:0 rather than erroring. All core pages (/,/products,/products/<slug>,/about,/contact,/custom-order,/showcase) return HTTP 200 and product images load (200).",
+        "Some credibility signals exist: audit badges (amfori BSCI valid to Aug 2026, SMETA/Sedex, ICS), a stated 6-hour response promise, and a 'confidential' assurance next to the form."
+      ],
+      "issues": [
+        {
+          "title": "Entire storefront is apparel-branded, not bags/leather — destroys credibility for a bag buyer",
+          "severity": "critical",
+          "detail": "Site name is 'Minty Apparel'; homepage hero is 'Custom Apparel Manufacturer for Global Brands' with tickers for 'tees, hoodies, caps & activewear' and 'DTG · screen print · embroidery'. About page: 'founded to give growing brands factory-direct access to premium custom apparel', '20 years of manufacturing', clients C&A/TAKKO/Tally Weijl. Showcase is three apparel projects (Berlin Streetwear 5,000pc, US Fitness Sublimated Activewear, AU Garment-Dyed Capsule). custom-order flow is 'Pick a blank... premium tees'. As a bag buyer this reads as either the wrong company or a copy-paste template — I can't tell if they actually make these bags.",
+          "evidence": "curl / -> 'Minty Apparel — Custom Apparel Manufacturer'; curl /about -> 'premium custom apparel', 'DTG, screen printing, sublimation, and embroidery', 'C&A TAKKO Tally Weijl'; curl /showcase -> only apparel case studies; curl /custom-order -> '1. Pick a blank Choose from our catalog of premium tees'.",
+          "suggestion": "Rebrand the whole site to leather goods / bags: hero, About story, factory stats, materials section, showcase, and the custom-order 'how it works' must talk about bags, leather/PU, hardware, linings — and reference the real company (Pingyang Jinweilong / HOKA GROUP)."
+        },
+        {
+          "title": "Quote form's product-type options are apparel-only — I literally cannot say I want a bag",
+          "severity": "critical",
+          "detail": "On the product page, the contact page, and custom-order, the 'Interested in' dropdown offers only: T-Shirts, Hoodies, Caps & Hats, Activewear, POD Customization, Private Label, Bulk Wholesale. There is no Bags / Backpack / Crossbody / Kids option. Requesting a quote for the exact bag I'm looking at makes the form self-contradict, which erodes confidence that the inquiry reaches the right team.",
+          "evidence": "curl /products/hj-bw100001 and /contact both render: 'Interested in T-Shirts Hoodies Caps & Hats Activewear POD Customization Private Label Bulk Wholesale'.",
+          "suggestion": "Replace the options with bag-relevant categories (Women's Bags, Kids' Bags, Backpacks, Crossbody, Totes, Wallets, Private Label, Bulk Wholesale) and auto-select the category when the inquiry comes from a product page."
+        },
+        {
+          "title": "No pricing or price guidance anywhere — every product is 'Contact for pricing'",
+          "severity": "high",
+          "detail": "priceTiers is an empty array for every product in the API and each detail page shows only 'Contact for pricing'. With a firm MOQ of 1000, I have no way to gauge whether a 1000-unit order is $3/unit or $15/unit before investing time in an inquiry. Even indicative price bands or a 'from $X at MOQ' would help me shortlist.",
+          "evidence": "GET /api/v1/products?pageSize=1 -> item has 'priceTiers':[] and 'moq':1000; /products/hj-bw100001 shows 'Contact for pricing'.",
+          "suggestion": "Add at least indicative price ranges or tiered pricing (e.g. 1000 / 3000 / 5000 pcs) per product, or a clear note like 'sample-based quote within 6h'. Empty prices + hidden pricing is normal for B2B but some guidance greatly reduces friction."
+        },
+        {
+          "title": "MOQ of 1000 on everything, with no sample/small-batch path visible",
+          "severity": "high",
+          "detail": "Every product lists moq:1000 and there's no stated sample price, sample lead time, or trial-order option. As a boutique I often want 100-300 units or a paid sample first. A flat 1000 MOQ with no 'order a sample' mechanism is a barrier and may push me to a more flexible supplier.",
+          "evidence": "API moq:1000 on all sampled items; product pages mention 'Request a sample' only as a Mia chat prompt, with no sample price/terms; homepage claims 'Flexible MOQ' which contradicts the flat 1000.",
+          "suggestion": "Clarify sample ordering (cost, lead time, how to request), and either lower/vary MOQ by product or explain the 'Flexible MOQ' claim so it doesn't contradict the 1000 shown on every product."
+        },
+        {
+          "title": "Weak contact/verification details: no phone, no address, placeholder WhatsApp number",
+          "severity": "high",
+          "detail": "Contact page offers only an email (technical.support@amaxleather.com) and a WhatsApp button. There is no telephone number, no physical factory address, no company registration or business license reference. The WhatsApp button uses an obvious placeholder number. For a first-time overseas supplier, I need a verifiable address and a real phone to trust wiring a deposit.",
+          "evidence": "curl /contact shows only email + 'WhatsApp ready' with no phone/address; embedded WhatsApp number is 8613800000000 (+86 138 0000 0000, a placeholder); no 'Zhejiang/Pingyang/Wenzhou/address' text found on /about or /contact.",
+          "suggestion": "Add a real factory address (Pingyang, Zhejiang), a working phone/WhatsApp, business license/registration number, and ideally a Google Maps embed. Fix the placeholder WhatsApp number."
+        },
+        {
+          "title": "Stated certifications and client logos are apparel-audit oriented and unverifiable for bags",
+          "severity": "medium",
+          "detail": "The trust section cites amfori BSCI (valid Aug 2026), SMETA/Sedex, ICS, and retailer names C&A/TAKKO/Tally Weijl — all apparel-retail signals. For leather goods I'd expect leather/material certs (e.g. REACH/RoHS, Prop 65, LWG for leather) and there are no downloadable certificates or audit report references to verify the claims.",
+          "evidence": "curl /about trust section: 'amfori BSCI — Full social audit by SGS — valid to Aug 2026', 'SMETA', 'ICS Audited', 'Trusted by ... C&A TAKKO Tally Weijl'.",
+          "suggestion": "Show product-relevant compliance for bags (REACH/RoHS/Prop 65, LWG if genuine leather), provide downloadable/verifiable cert copies, and align showcased clients with the bag business (or remove apparel-retailer name-drops)."
+        },
+        {
+          "title": "Promotions and newsletter features are dead (501 Not Implemented)",
+          "severity": "low",
+          "detail": "Two advertised-looking endpoints return 501. A newsletter that silently fails or a promotions area that doesn't work makes the site feel half-finished and lowers overall polish/trust.",
+          "evidence": "GET /api/v1/promotions -> {code:501,'Not Implemented'}; POST /api/v1/newsletter/subscribe -> {code:501,'Not Implemented'}.",
+          "suggestion": "Either implement these or hide any UI that points to them so buyers don't hit dead features."
+        },
+        {
+          "title": "Mia chat assistant still suggests apparel keywords",
+          "severity": "low",
+          "detail": "The floating Mia assistant on every page greets as an 'apparel concierge' and prompts me to 'type a keyword (e.g. \"hoodie\")' — on a bag catalog this suggested search returns nothing relevant and reinforces the apparel/bag mismatch.",
+          "evidence": "Rendered widget text: 'I'm Mia, your apparel concierge...type a keyword (e.g. \"hoodie\") to search'; the word 'hoodie' leaks into /products only via this widget.",
+          "suggestion": "Rewrite Mia's copy for bags (e.g. suggest 'backpack', 'crossbody', 'tote') and rebrand her as a bag/leather concierge."
+        }
+      ],
+      "rating": 2.5
+    },
+    {
+      "role": "customer",
+      "area": "fashion-shopper",
+      "summary": "Shopping as a woman looking for a stylish bag, the actual product experience delighted me: the photos are gorgeous and real, descriptions are specific and appealing, search understands style/color/type language, and both categories (55 women's + 41 kids' = 96) render cleanly. What broke the spell repeatedly was the leftover APPAREL branding: the homepage headline is literally \"Custom Apparel, Factory-Direct,\" every product's browser tab reads \"— Minty Apparel,\" and detail pages talk about \"custom Print-On-Demand apparel\" and \"global B2B apparel sourcing\" right under a picture of a handbag. That mismatch made me question whether I was in the right store. Two other friction points: prices are entirely hidden (\"Contact for pricing\", MOQ 1000) so as an individual shopper I can't actually buy — I can only send an inquiry (which worked); and the newsletter signup is broken (501 Not Implemented). Net: beautiful merchandise trapped inside a storefront that still thinks it sells t-shirts.",
+      "positives": [
+        "Product photography is genuinely excellent — I Read HJ-BW100007 (red saddle handbag) and it is a crisp, well-lit, high-res hero shot on clean white that I would happily click 'buy' on; HJ-BW100003 shows two real colorways (black + burgundy) with visible gold clasp and chain exactly as described.",
+        "All 96 product images exist on disk, none broken/tiny (sizes ~435KB–1.3MB), and serve correctly over HTTP as image/png (verified content_type + size).",
+        "Descriptions are specific and shopper-friendly, not generic: e.g. 'A dainty mini crossbody bag with a suede-look finish, gold push-lock clasp, and a delicate chain strap for hands-free elegance,' plus a spec line with Type, Material (PU/vegan leather), Dimensions (17*8*12 cm), Colors, and SKU.",
+        "Search is smart and fast — style/type/color queries all return rich relevant results (quilted 11, crossbody 44, tote 8, clutch 5, backpack 22, chain 27); nonsense query 'zzzznotabag' correctly returns 0; empty query returns all 96.",
+        "Photos match the copy precisely — the 'Set of 3' star-print wristlet (HJ-BW100005) really shows three clutches (silver, black glitter, star-print), which builds trust.",
+        "Category filtering works: womens-bags=55, kids-bags=41, and the /products page server-renders real product names and images.",
+        "Submitting a product inquiry worked smoothly and returned a confirmation ('Inquiry received', id 13) with a reassuring 'we respond within 6 hours' note."
+      ],
+      "issues": [
+        {
+          "title": "Homepage and page titles still sell APPAREL, not bags — trust-breaking for a bag shopper",
+          "severity": "high",
+          "detail": "The homepage H1 is 'Custom Apparel, Factory-Direct' and the page mentions 'Apparel'/'apparel' ~50 times and 'Print-On-Demand'/'POD' ~36 times, versus only ~24 mentions of Bags/Handbag/Leather. Every product's <title> tag reads '<Product> — Minty Apparel' (e.g. 'Red Saddle Handbag with Detachable Crossbody Strap — Minty Apparel'). Detail pages also render placeholder marketing: 'Your factory-direct partner for custom Print-On-Demand apparel...' and 'Built for global B2B apparel sourcing.' The /products listing itself still contains 'Custom Apparel' (6x) and 'Custom POD' (3x).",
+          "evidence": "curl / -> H1 'Custom Apparel, Factory-Direct'; homepage keyword counts: Apparel 25 + apparel 17 + custom apparel 12, Print-On-Demand 22, POD 14. Product page title: '<title>Red Saddle Handbag with Detachable Crossbody Strap — Minty Apparel</title>'. Detail-page <p> text: 'custom Print-On-Demand apparel' and 'Built for global B2B apparel sourcing.'",
+          "suggestion": "Swap the hero, nav labels, meta title suffix (to '— Minty' or '— Minty Bags'), and footer/detail marketing copy to bag/leather-goods language. As a shopper this is the single thing that made me doubt I was in the right shop."
+        },
+        {
+          "title": "No prices at all — an individual shopper hits a wall",
+          "severity": "medium",
+          "detail": "Every product shows 'Contact for pricing' with MOQ 1000 and empty priceTiers. As a woman buying one bag for myself, there is no price and no way to purchase a single unit; the only path forward is an inquiry. This is fine for wholesale but disappointing/confusing for a retail-style shopper who arrived expecting to buy a bag.",
+          "evidence": "API items all have \"priceTiers\":[] and \"moq\":1000; product pages render 'Contact for pricing' (2x each). No add-to-cart / checkout anywhere.",
+          "suggestion": "If retail shoppers are a target, show indicative unit pricing or a clear 'wholesale only, min order 1000' banner up front so I understand the model before I invest time picking a bag."
+        },
+        {
+          "title": "Newsletter signup is broken (501 Not Implemented)",
+          "severity": "medium",
+          "detail": "I tried to subscribe for updates (something I would do after seeing bags I liked). The endpoint returns HTTP 501 'Not Implemented', so any newsletter form on the site will fail silently or error for shoppers.",
+          "evidence": "POST /api/v1/newsletter/subscribe {\"email\":\"sofia@example.com\"} -> HTTP 501, body {\"code\":501,\"message\":\"Not Implemented\",\"data\":null}",
+          "suggestion": "Either implement the subscribe endpoint or hide/remove the newsletter UI until it works, so shoppers aren't met with a dead feature."
+        },
+        {
+          "title": "Color/keyword search is very broad, hurting precision",
+          "severity": "low",
+          "detail": "Color searches return far more than they should because matching seems to include every colorway a product is offered in, not its primary color. 'pink' returns 34 of 96 products and surfaces items like a star-print glitter clutch and a suede crossbody whose main color isn't pink; 'red' returns 28 and 'black' 42. As a shopper filtering for 'a pink bag' I'd have to wade through a lot of not-really-pink results.",
+          "evidence": "q=pink total=34 (top hits: 'Star-Print & Glitter Zip Wristlet Clutch', 'Mini Suede-Look Flap Crossbody Bag', 'Chevron Quilted Leather Flap Shoulder Bag'); q=black total=42; q=red total=28 out of 96 total.",
+          "suggestion": "Add a dedicated color facet/filter distinct from full-text keywords, or rank by primary color first, so a color query returns bags that actually look that color."
+        }
+      ],
+      "rating": 3
+    },
+    {
+      "role": "customer",
+      "area": "first-impression",
+      "summary": "As a first-time B2B buyer landing on http://localhost:3000, I hit an immediate contradiction. The homepage headline, page title, animated ticker, footer, and every CTA scream \"Custom Apparel / Print-On-Demand — tees, hoodies, caps & activewear,\" yet the actual catalog is 96 leather-look handbags and backpacks (55 women's, 41 kids'). The hero says \"Custom Apparel, Factory-Direct\" and the featured grid directly below it shows a \"Quilted Leather-Look Mini Backpack\" and \"Faux-Leather Tote Bag.\" That is the exact moment a real buyer's trust drops: it reads like a hijacked or half-finished template, not a real bag supplier. The product layer itself is genuinely strong — I downloaded /products/HJ-BW100001.png and it's a clean, professional white-background studio shot of a black quilted mini backpack, and the detail page carries real specs (PU vegan leather, 20*13*23 cm, colors black/gold, SKU HJ-BW100001) plus a solid description. Search works for bag terms (backpack=22, tote=8, kids=42 results) and the inquiry POST returned {\"id\":12} HTTP 200, so I could actually convert. But the mismatch is pervasive and undercuts confidence: the on-page \"Mia\" chat calls itself an \"apparel concierge\" and tells me to type \"hoodie\" (which returns 0 results), and both the product and contact inquiry forms offer an \"Interested in: T-Shirts / Hoodies / Caps & Hats / Activewear\" dropdown with no bag options at all. Prices are all \"Contact for pricing\" with a firm MOQ 1000, which is normal for B2B but adds friction. Overall: polished, fast, credible-looking product pages wrapped in a brand identity for a completely different industry. I would not confidently bounce, but I'd hesitate and wonder if these people even sell what they're advertising — a serious first-impression risk. Rating 2/5.",
+      "positives": [
+        "Product photography is excellent and consistent — Read of /products/HJ-BW100001.png shows a professional, well-lit white-background studio shot of a black quilted mini backpack; images serve at HTTP 200 (~1 MB PNGs), the kind of visual quality that builds buyer confidence",
+        "Product detail pages are genuinely useful and specific: real specs (Material: PU leather (vegan leather), Dimensions: 20*13*23 cm, Colors: black/gold, SKU: HJ-BW100001) plus a natural-language description — feels like a real supplier once you're on the page",
+        "Site is fast and stable: homepage 200 in ~0.07s, and /products /about /contact /custom-order /showcase all return 200",
+        "Catalog is real and searchable — API returns total 96 products; q=backpack=22, q=tote=8, q=kids=42 relevant hits, so a buyer who knows what they want can find it",
+        "Conversion path works end-to-end: POST /api/v1/inquiries returned {\"code\":200,\"message\":\"Inquiry received\",\"data\":{\"id\":12}} and forms promise a 6-hour response with confidentiality — reassuring for a first-time buyer"
+      ],
+      "issues": [
+        {
+          "title": "Hero, title, and whole brand say 'Custom Apparel' but every product is a bag — jarring category mismatch that erodes trust on sight",
+          "severity": "critical",
+          "detail": "The homepage <title> is 'Minty Apparel — Custom Apparel Manufacturer for Global Brands', the hero reads 'Custom Apparel, Factory-Direct / Premium Print-On-Demand manufacturing', the meta description says 'custom Print-On-Demand apparel', the ticker repeats 'tees, hoodies, caps & activewear', and the footer says 'Built for global B2B apparel sourcing'. Directly beneath the apparel hero, the featured grid shows 'Quilted Leather-Look Mini Backpack' and 'Large Structured Faux-Leather Tote Bag'. A first-time visitor immediately doubts whether the company actually sells what it advertises.",
+          "evidence": "curl / -> title 'Custom Apparel Manufacturer', hero 'Custom Apparel, Factory-Direct', ticker 'Premium Print-On-Demand · tees, hoodies, caps & activewear'; same page featured cards = 'Women's Bags Quilted Leather-Look Mini Backpack'. API total=96 bags, apparel terms tee/cap/activewear/shirt/hoodie all return total:0.",
+          "suggestion": "Rewrite hero, page title, meta description, ticker, and footer to a bag/leather-goods brand identity (e.g. 'Custom Leather & Vegan-Leather Bags, Factory-Direct'). Replace 'tees, hoodies, caps & activewear' with 'backpacks, totes, crossbodies & clutches'. This is the single highest-impact fix for first impressions."
+        },
+        {
+          "title": "Inquiry forms only let me pick apparel product types — no bag categories at all",
+          "severity": "high",
+          "detail": "On both the product detail page and /contact, the 'Interested in' selector lists only 'T-Shirts / Hoodies / Caps & Hats / Activewear / POD Customization / Private Label / Bulk Wholesale'. As a buyer inquiring about a backpack, none of the options fit, so the lead I submit is mislabeled and I feel the form wasn't built for me.",
+          "evidence": "curl /products/hj-bw100001 and /contact both render: 'Interested in T-Shirts Hoodies Caps & Hats Activewear POD Customization Private Label Bulk Wholesale'.",
+          "suggestion": "Replace the apparel options with bag categories (Women's Bags, Kids' Bags, Backpacks, Totes, Crossbody, Clutches, Private Label, Bulk Wholesale)."
+        },
+        {
+          "title": "The 'Mia' chat widget is an 'apparel concierge' and coaches me to search 'hoodie' — which returns zero results",
+          "severity": "high",
+          "detail": "The floating chat greets me: 'Hi! I'm Mia, your apparel concierge. Ask me anything — or type a keyword (e.g. \"hoodie\") to search our products.' Following that exact instruction returns nothing, making the site's own guided path feel broken and reinforcing the wrong-industry impression.",
+          "evidence": "Widget text on / and product pages contains 'apparel concierge' and example 'hoodie'; API q=hoodie -> {\"total\":0}. By contrast q=backpack=22.",
+          "suggestion": "Reword Mia to a bag concierge and use a working example keyword like 'backpack' or 'tote'."
+        },
+        {
+          "title": "Newsletter and promotions endpoints return 501 Not Implemented",
+          "severity": "medium",
+          "detail": "If a footer newsletter signup is wired to the API, it will silently fail; any promotions banner will have no data. Not front-and-center for a first look, but a broken subscribe form damages trust if surfaced.",
+          "evidence": "POST /api/v1/newsletter/subscribe -> {\"code\":501,\"message\":\"Not Implemented\"} HTTP 501; GET /api/v1/promotions -> {\"code\":501,\"message\":\"Not Implemented\"} HTTP 501.",
+          "suggestion": "Either implement these or hide/remove any UI (newsletter box, promo banner) that depends on them so buyers don't hit dead ends."
+        },
+        {
+          "title": "All prices are 'Contact for pricing' with a hard MOQ 1000 and no ranges — high friction for early evaluation",
+          "severity": "low",
+          "detail": "Every card and detail page shows 'Contact for pricing' and 'MOQ 1000 pcs'. This is acceptable for factory-direct B2B, but with zero price signal and a 1000-unit minimum, a first-time buyer can't gauge fit before committing to an inquiry, which raises the bar to engage.",
+          "evidence": "priceTiers:[] in API for all items; /products cards uniformly show 'MOQ 1000 pcs Contact for pricing'.",
+          "suggestion": "Add indicative tiered price ranges or a 'from $X at 1000 pcs' hint, or a sample-order option, to let buyers self-qualify before inquiring."
+        }
+      ],
+      "rating": 2
+    }
+  ]
+}

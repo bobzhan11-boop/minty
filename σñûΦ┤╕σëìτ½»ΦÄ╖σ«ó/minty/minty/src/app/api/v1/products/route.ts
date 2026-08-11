@@ -2,41 +2,31 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok } from "@/lib/api";
 import { parseJson } from "@/lib/utils";
+import { buildSearchWhere } from "@/lib/search";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/v1/products — public product list with pagination + category filter +
- * keyword search (§5.2). Powers Mia's product-search skill.
- * Query: ?page=1&pageSize=12&category=t-shirts&q=hoodie
+ * keyword search (§5.2). Powers Mia's product-search skill and the catalog page.
+ * Query: ?page=1&pageSize=12&category=womens-bags&q=pink+backpack
  *
- * `q` matches (case-insensitively, via SQLite LIKE) on product name, description
- * and category name.
+ * Search is tokenized (whitespace), singularized (so "backpacks" matches
+ * "backpack"), LIKE-wildcards are escaped, and all tokens must match (AND) across
+ * name / description / specs / keywords / category name.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const page = Math.max(1, Number(searchParams.get("page")) || 1);
-  const pageSize = Math.min(50, Math.max(1, Number(searchParams.get("pageSize")) || 12));
+  const page = Math.max(1, Math.floor(Number(searchParams.get("page")) || 1));
+  const pageSize = Math.min(100, Math.max(1, Math.floor(Number(searchParams.get("pageSize")) || 12)));
   const category = searchParams.get("category") || undefined;
-  const q = searchParams.get("q")?.trim() || undefined;
+  const q = searchParams.get("q") ?? undefined;
 
   const where = {
     status: "published",
     ...(category ? { category: { slug: category } } : {}),
-    // SQLite `contains` is already case-insensitive for ASCII (no `mode` needed,
-    // which SQLite would reject).
-    ...(q
-      ? {
-          OR: [
-            { name: { contains: q } },
-            { description: { contains: q } },
-            { specs: { contains: q } },
-            { keywords: { contains: q } },
-            { category: { name: { contains: q } } },
-          ],
-        }
-      : {}),
+    ...buildSearchWhere(q),
   };
 
   const [total, products] = await Promise.all([

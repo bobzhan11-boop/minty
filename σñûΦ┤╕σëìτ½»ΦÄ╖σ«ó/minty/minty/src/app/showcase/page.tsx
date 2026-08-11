@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Showcase — Client Projects",
-  description: "Real custom apparel projects we've delivered for brands across streetwear, fitness and lifestyle.",
+  description: "Real custom bag & leather-goods projects we've delivered for retail brands and importers across Europe, North America and Asia.",
 };
 
 export default async function ShowcasePage() {

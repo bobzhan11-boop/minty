@@ -49,7 +49,13 @@ export function MiaThread({
   }, [messages, typing]);
 
   return (
-    <div ref={ref} className={`space-y-3 overflow-y-auto ${className}`}>
+    <div
+      ref={ref}
+      role="log"
+      aria-live="polite"
+      aria-label="Chat conversation with Mia"
+      className={`space-y-3 overflow-y-auto ${className}`}
+    >
       {messages.map((m, i) => (
         <div key={i} className={m.from === "user" ? "flex justify-end" : "flex flex-col items-start"}>
           <p

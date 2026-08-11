@@ -43,7 +43,7 @@ export function Footer() {
         <div>
           <h3 className="text-sm font-semibold text-ink">Get in touch</h3>
           <ul className="mt-3 space-y-2 text-sm text-ink-muted">
-            <li>{process.env.INQUIRY_NOTIFY_EMAIL ?? "hello@minty.dev"}</li>
+            <li>{process.env.INQUIRY_NOTIFY_EMAIL ?? "sales@amaxleather.com"}</li>
             <li><Link href="/contact" className="font-medium text-brand-700 hover:underline">Request a quote →</Link></li>
           </ul>
         </div>
@@ -52,7 +52,7 @@ export function Footer() {
       <div className="border-t border-slate-200">
         <div className="container flex flex-col items-center justify-between gap-2 py-5 text-xs text-ink-muted sm:flex-row">
           <p>© {year} {SITE.name}. All rights reserved.</p>
-          <p>Built for global B2B apparel sourcing.</p>
+          <p>Custom bags & leather goods · Factory-direct wholesale.</p>
         </div>
       </div>
     </footer>

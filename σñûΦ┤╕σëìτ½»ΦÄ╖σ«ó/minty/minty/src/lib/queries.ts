@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { parseJson } from "@/lib/utils";
+import { buildSearchWhere } from "@/lib/search";
 import type { ProductCardData } from "@/components/product-card";
 
 function toCard(p: {
@@ -21,11 +22,15 @@ function toCard(p: {
   };
 }
 
-export async function getPublishedProducts(categorySlug?: string): Promise<ProductCardData[]> {
+export async function getPublishedProducts(
+  categorySlug?: string,
+  query?: string,
+): Promise<ProductCardData[]> {
   const products = await prisma.product.findMany({
     where: {
       status: "published",
       ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+      ...buildSearchWhere(query),
     },
     orderBy: { sortOrder: "asc" },
     include: { category: true, images: true },

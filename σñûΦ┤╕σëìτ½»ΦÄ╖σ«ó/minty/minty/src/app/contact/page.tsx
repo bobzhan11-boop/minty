@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/section-heading";
 
 export const metadata: Metadata = {
   title: "Contact — Request a Quote",
-  description: "Tell us about your apparel project and get a quote within 6 hours. Inquiry form or WhatsApp.",
+  description: "Tell us about your custom bag project and get a quote within 6 hours. Inquiry form or WhatsApp.",
 };
 
 const PERKS = [
@@ -21,8 +21,8 @@ export default function ContactPage() {
         <div>
           <SectionHeading
             eyebrow="Contact"
-            title="Let's build your apparel line"
-            subtitle="Share your specs, target quantity and timeline. We'll come back with pricing and next steps."
+            title="Let's build your bag line"
+            subtitle="Share your specs, materials, target quantity and timeline. We'll come back with pricing and next steps."
           />
           <ul className="mt-8 space-y-5">
             {PERKS.map((p) => (
@@ -39,7 +39,7 @@ export default function ContactPage() {
           </ul>
           <div className="mt-8 flex items-center gap-2 text-sm text-ink-muted">
             <Mail className="h-4 w-4" />
-            {process.env.INQUIRY_NOTIFY_EMAIL ?? "hello@minty.dev"}
+            {process.env.INQUIRY_NOTIFY_EMAIL ?? "sales@amaxleather.com"}
           </div>
         </div>
 

@@ -18,7 +18,7 @@ export function WhatsAppButton() {
 
   return (
     <a
-      href={whatsappUrl(`Hi Minty! I'm interested in custom apparel. (from ${pathname})`)}
+      href={whatsappUrl(`Hi Minty! I'm interested in custom bags. (from ${pathname})`)}
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}

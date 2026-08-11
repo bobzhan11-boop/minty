@@ -4,16 +4,16 @@ import { InquiryForm } from "@/components/inquiry-form";
 import { SectionHeading } from "@/components/section-heading";
 
 export const metadata: Metadata = {
-  title: "Custom POD — How It Works",
-  description: "Our Print-On-Demand customization process: pick a blank, submit your design, approve a sample, produce, ship.",
+  title: "Custom Orders — OEM & ODM Bags",
+  description: "Our custom bag manufacturing process: pick a style, submit your design, approve a sample, produce, ship. Custom materials, hardware and private-label branding.",
 };
 
 const STEPS = [
-  { icon: Palette, title: "1. Pick a blank", desc: "Choose from our catalog of premium tees, hoodies, caps and activewear." },
-  { icon: Upload, title: "2. Submit design", desc: "Send artwork, Pantone refs and label specs — we handle the tech pack." },
+  { icon: Palette, title: "1. Pick a style", desc: "Start from our catalog of backpacks, crossbody, tote and handbags — or send your own design." },
+  { icon: Upload, title: "2. Submit design", desc: "Send artwork, materials, colors, hardware and label specs — we build the tech pack." },
   { icon: PackageCheck, title: "3. Approve sample", desc: "We produce a pre-production sample for your sign-off before bulk." },
-  { icon: Factory, title: "4. Bulk production", desc: "DTG, screen, sublimation or embroidery — with QC at every stage." },
-  { icon: Truck, title: "5. Ship worldwide", desc: "Door-to-door logistics with tracking to 60+ countries." },
+  { icon: Factory, title: "4. Bulk production", desc: "Cutting, sewing, edge-painting and QC at every stage — MOQ from 1,000 pcs." },
+  { icon: Truck, title: "5. Ship worldwide", desc: "Door-to-door DDP logistics with tracking to your market." },
 ];
 
 export default function CustomOrderPage() {
@@ -23,9 +23,9 @@ export default function CustomOrderPage() {
         <div className="container">
           <SectionHeading
             center
-            eyebrow="Print-On-Demand"
+            eyebrow="Custom Manufacturing"
             title="From idea to doorstep in five steps"
-            subtitle="Our POD workflow is built to lower the barrier to custom manufacturing — no jargon, no surprises."
+            subtitle="Our OEM/ODM workflow is built to lower the barrier to custom bag manufacturing — no jargon, no surprises."
           />
           <ol className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {STEPS.map((s) => (
@@ -46,9 +46,9 @@ export default function CustomOrderPage() {
           <SectionHeading
             eyebrow="Start a project"
             title="Tell us what you want to make"
-            subtitle="Fill in the form and we'll scope your POD project — pricing, lead time and sample plan included."
+            subtitle="Fill in the form and we'll scope your custom bag project — pricing, lead time and sample plan included."
           />
-          <InquiryForm defaultInterest="POD Customization" />
+          <InquiryForm defaultInterest="Private Label / OEM" />
         </div>
       </section>
     </>

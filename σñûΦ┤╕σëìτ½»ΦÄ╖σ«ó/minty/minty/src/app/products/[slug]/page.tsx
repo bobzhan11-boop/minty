@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 async function getProduct(slug: string) {
   return prisma.product.findUnique({
-    where: { slug },
+    where: { slug: slug.toLowerCase() }, // slugs are stored lowercase; accept any case
     include: { category: true, images: { orderBy: { sortOrder: "asc" } }, videos: true },
   });
 }
@@ -68,7 +68,12 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
             {product.category.name}
           </span>
           <h1 className="mt-3 text-3xl font-bold text-ink">{product.name}</h1>
-          <p className="mt-2 text-lg font-semibold text-brand-700">{fromPrice(tiers)}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <p className="text-lg font-semibold text-brand-700">{fromPrice(tiers)}</p>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-ink-soft">
+              Wholesale · MOQ {product.moq.toLocaleString()} pcs
+            </span>
+          </div>
           <p className="mt-4 text-ink-soft">{product.description}</p>
 
           {product.specs && (

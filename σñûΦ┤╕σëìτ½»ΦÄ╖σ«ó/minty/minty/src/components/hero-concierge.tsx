@@ -20,19 +20,19 @@ export interface HeroData {
 
 /** Readable one-line intro sentences that flow behind the figure (full-bleed). */
 const MARQUEE_PHRASES = [
-  "Minty Apparel — your factory-direct custom apparel partner",
-  "Premium Print-On-Demand · tees, hoodies, caps & activewear",
-  "Flexible MOQ · worldwide shipping · full customization",
-  "DTG · screen print · embroidery · private label",
-  "From first sample to six-figure production runs",
+  "Minty Bags — your factory-direct custom bag partner",
+  "Women's & kids' bags · backpacks, crossbody, totes & more",
+  "Wholesale MOQ · worldwide shipping · full customization",
+  "PU & genuine leather · custom hardware · private label",
+  "From first sample to full production runs",
   "Send your specs — get a quote within 6 hours",
 ];
 
 export function HeroConcierge({ hero }: { hero: HeroData | null }) {
-  const slogan = hero?.slogan ?? "Custom Apparel, Factory-Direct";
+  const slogan = hero?.slogan ?? "Custom Bags & Leather Goods, Factory-Direct";
   const subtitle =
     hero?.subtitle ??
-    "Premium Print-On-Demand manufacturing for global brands. Flexible MOQ · Worldwide shipping · Full customization.";
+    "Women's & kids' bags for global brands. Wholesale MOQ · Worldwide shipping · Full OEM/ODM customization.";
   const primaryCta = hero?.primaryCta ?? { label: "Get a Quote", href: "/contact" };
   const secondaryCta = hero?.secondaryCta ?? { label: "View Products", href: "/products" };
 
@@ -78,18 +78,14 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
           }`}
         >
           {/* ===== Digital clerk (hover / tap to activate) ===== */}
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={`Talk to ${CLERK_NAME}, your apparel concierge`}
+          <button
+            type="button"
+            aria-label={`Talk to ${CLERK_NAME}, your bag concierge`}
             aria-expanded={active}
             onMouseEnter={() => setActive(true)}
             onClick={() => setActive(true)}
             onFocus={() => setActive(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setActive(true);
-            }}
-            className={`group relative w-72 cursor-pointer outline-none transition-transform duration-500 ${
+            className={`group relative block w-72 cursor-pointer text-left outline-none transition-transform duration-500 ${
               active ? "" : "hover:scale-[1.02]"
             }`}
           >
@@ -109,7 +105,7 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
                 muted
                 loop
                 playsInline
-                aria-label={`${CLERK_NAME}, digital apparel concierge`}
+                aria-label={`${CLERK_NAME}, digital bag concierge`}
               >
                 <source src="/digital-clerk.mp4" type="video/mp4" />
               </video>
@@ -137,7 +133,7 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
               <p className="mt-2 text-lg font-semibold text-ink">{CLERK_NAME}</p>
               <p className="mt-1 animate-pulse text-xs text-ink-muted">Hover or tap to chat →</p>
             </div>
-          </div>
+          </button>
 
           {/* ===== Chat console (revealed on activate) ===== */}
           <div
@@ -223,7 +219,7 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={`Message ${CLERK_NAME}…`}
-                  aria-label="Chat with the apparel concierge"
+                  aria-label="Chat with the bag concierge"
                   className="field flex-1"
                 />
                 <button

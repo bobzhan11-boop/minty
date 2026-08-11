@@ -1,6 +1,12 @@
-import { fail } from "@/lib/api";
+import { ok } from "@/lib/api";
 
-// Reserved for Phase 2 (§3.5) — promotions list.
+export const dynamic = "force-dynamic";
+
+/**
+ * GET /api/v1/promotions — active promotions.
+ * No promotions engine yet, so this returns an empty list (200) rather than a
+ * 501, so any consumer degrades gracefully.
+ */
 export async function GET() {
-  return fail(501, "Not Implemented");
+  return ok({ items: [] });
 }

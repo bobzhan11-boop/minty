@@ -63,7 +63,7 @@ export default async function HomePage() {
       <section className="section bg-slate-50">
         <div className="container">
           <div className="flex items-end justify-between gap-4">
-            <SectionHeading eyebrow="Catalog" title="Featured blanks & styles" />
+            <SectionHeading eyebrow="Catalog" title="Featured bags" />
             <Link href="/products" className="hidden shrink-0 font-medium text-brand-700 hover:underline sm:block">
               View all products →
             </Link>
@@ -118,10 +118,10 @@ export default async function HomePage() {
         <div className="container flex flex-col items-center gap-6 py-16 text-center text-white">
           <Quote className="h-8 w-8 opacity-70" />
           <h2 className="max-w-2xl text-3xl font-bold sm:text-4xl">
-            Ready to bring your apparel line to life?
+            Ready to bring your bag line to life?
           </h2>
           <p className="max-w-xl text-brand-50">
-            Send us your specs and get a quote within 6 hours. No minimum-of-minimums, no runaround.
+            Send us your specs and get a quote within 6 hours. Wholesale MOQ from 1,000 pcs, no runaround.
           </p>
           <CtaLink
             href="/contact"

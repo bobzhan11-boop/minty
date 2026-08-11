@@ -66,3 +66,17 @@
   animation: marquee-x-rev 30s linear infinite;
   will-change: transform;
 }
+
+/* Respect reduced-motion: stop the marquee/pulse/float/ping animations and
+   smooth-scroll for users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .marquee-track,
+  .marquee-track-rev,
+  .animate-float,
+  .animate-ping,
+  .animate-pulse,
+  .animate-bounce {
+    animation: none !important;
+  }
+}
