@@ -6,8 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { parseJson, fromPrice } from "@/lib/utils";
 import { InquiryForm } from "@/components/inquiry-form";
 import { ProductView } from "@/components/product-view";
+import { ProductCard } from "@/components/product-card";
 import { WhatsAppInline } from "@/components/whatsapp-inline";
 import { JsonLd } from "@/components/json-ld";
+import { getRelatedProducts } from "@/lib/queries";
 import { productJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +56,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
   const tiers = parseJson<{ qty: number; price: number }[]>(product.priceTiers, []);
   const primary = product.images.find((i) => i.isPrimary) ?? product.images[0];
+  const related = await getRelatedProducts(product.categoryId, product.slug, 4);
 
   return (
     <div className="container py-10">
@@ -152,6 +155,17 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           <InquiryForm productId={product.id} productName={product.name} compact />
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section className="mt-16 border-t border-slate-100 pt-12">
+          <h2 className="text-2xl font-bold text-ink">More {product.category.name}</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {related.map((r) => (
+              <ProductCard key={r.slug} p={r} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

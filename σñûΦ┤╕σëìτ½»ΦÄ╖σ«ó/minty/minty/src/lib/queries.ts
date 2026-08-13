@@ -12,12 +12,14 @@ function toCard(p: {
   priceTiers: string | null;
 }): ProductCardData {
   const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
+  const hover = p.images.find((i) => i.url !== primary?.url);
   return {
     slug: p.slug,
     name: p.name,
     moq: p.moq,
     category: p.category.name,
     image: primary?.url ?? "",
+    hoverImage: hover?.url,
     priceTiers: parseJson<{ qty: number; price: number }[]>(p.priceTiers, []),
   };
 }
@@ -43,6 +45,21 @@ export async function getPublishedProducts(
 
 export async function getFeaturedProducts(limit = 6): Promise<ProductCardData[]> {
   return (await getPublishedProducts()).slice(0, limit);
+}
+
+/** Other products in the same category (for "you may also like" on detail pages). */
+export async function getRelatedProducts(
+  categoryId: number,
+  excludeSlug: string,
+  limit = 4,
+): Promise<ProductCardData[]> {
+  const products = await prisma.product.findMany({
+    where: { status: "published", categoryId, slug: { not: excludeSlug } },
+    orderBy: { sortOrder: "asc" },
+    take: limit,
+    include: { category: true, images: true },
+  });
+  return products.map(toCard);
 }
 
 export async function getCategories() {

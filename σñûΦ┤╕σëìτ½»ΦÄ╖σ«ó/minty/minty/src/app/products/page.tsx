@@ -8,6 +8,9 @@ import { ProductSearch } from "@/components/product-search";
 
 export const dynamic = "force-dynamic";
 
+/** Quick-search shortcuts for popular bag styles (drive the keyword search). */
+const STYLE_CHIPS = ["Backpacks", "Crossbody", "Totes", "Handbags", "Clutches", "Belt Bags"];
+
 export async function generateMetadata({
   searchParams,
 }: {
@@ -75,6 +78,20 @@ export default async function ProductsPage({
       {/* Search */}
       <div className="mt-8">
         <ProductSearch initialQuery={query ?? ""} category={active} />
+      </div>
+
+      {/* Quick style shortcuts */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-ink-muted">Popular:</span>
+        {STYLE_CHIPS.map((s) => (
+          <Link
+            key={s}
+            href={`/products?q=${encodeURIComponent(s.toLowerCase())}`}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-ink-soft transition hover:border-brand-400 hover:text-brand-700"
+          >
+            {s}
+          </Link>
+        ))}
       </div>
 
       {/* Category filter */}
