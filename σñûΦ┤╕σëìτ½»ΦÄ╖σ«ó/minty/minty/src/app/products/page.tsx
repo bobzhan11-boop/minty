@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SITE } from "@/lib/constants";
-import { getPublishedProducts, getCategories } from "@/lib/queries";
+import { cn } from "@/lib/utils";
+import { getPublishedProducts, getCategories, getProductFacets, COLOR_FAMILIES } from "@/lib/queries";
 import { suggestQuery } from "@/lib/search";
 import { ProductCard } from "@/components/product-card";
 import { ProductSearch } from "@/components/product-search";
@@ -12,22 +13,25 @@ export const dynamic = "force-dynamic";
 /** Quick-search shortcuts for popular bag styles (drive the keyword search). */
 const STYLE_CHIPS = ["Backpacks", "Crossbody", "Totes", "Handbags", "Clutches", "Belt Bags"];
 
+type SearchParams = { category?: string; q?: string; color?: string; type?: string };
+
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string };
+  searchParams: SearchParams;
 }): Promise<Metadata> {
   const q = searchParams.q?.trim();
+  const filtered = Boolean(q || searchParams.color || searchParams.type);
   const cat = searchParams.category
     ? await prisma.productCategory.findUnique({ where: { slug: searchParams.category } })
     : null;
 
-  // Search-result pages are thin/near-duplicate — canonicalize to the catalog and keep them
-  // out of the index (still followable) to avoid duplicate-content dilution.
-  if (q) {
+  // Search / color / type views are thin & combinatorial — canonicalize to the catalog
+  // (or category) and keep them out of the index to avoid duplicate-content dilution.
+  if (filtered) {
     return {
-      title: `Search: ${q} — Bags`,
-      description: `Search results for “${q}” in the ${SITE.name} wholesale bag catalog.`,
+      title: q ? `Search: ${q} — Bags` : `${cat?.name ?? "Bags"} — Filtered`,
+      description: `Browse ${cat?.name ?? "bags"} in the ${SITE.name} wholesale catalog.`,
       alternates: { canonical: cat ? `/products?category=${cat.slug}` : "/products" },
       robots: { index: false, follow: true },
     };
@@ -51,20 +55,21 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: { category?: string; q?: string };
-}) {
+export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
   const active = searchParams.category;
   const query = searchParams.q?.trim() || undefined;
-  const [products, categories] = await Promise.all([
-    getPublishedProducts(active, query),
+  const color = searchParams.color || undefined;
+  const type = searchParams.type || undefined;
+
+  const [products, categories, facets] = await Promise.all([
+    getPublishedProducts(active, query, color, type),
     getCategories(),
+    getProductFacets(),
   ]);
   const activeCat = active ? categories.find((c) => c.slug === active) : null;
   const heading = activeCat ? activeCat.name : "Wholesale Bags Catalog";
   const suggestion = query && products.length === 0 ? suggestQuery(query) : null;
+  const anyFilter = Boolean(query || color || type);
 
   return (
     <div className="container py-14">
@@ -98,23 +103,80 @@ export default async function ProductsPage({
 
       {/* Category filter */}
       <div className="mt-6 flex flex-wrap gap-2">
-        <FilterChip label="All" href={hrefFor(undefined, query)} active={!active} />
+        <FilterChip label="All" href={buildHref({ q: query, color, type })} active={!active} />
         {categories.map((c) => (
           <FilterChip
             key={c.slug}
             label={c.name}
-            href={hrefFor(c.slug, query)}
+            href={buildHref({ category: c.slug, q: query, color, type })}
             active={active === c.slug}
           />
         ))}
       </div>
 
-      {query && (
-        <p className="mt-6 text-sm text-ink-muted">
-          {products.length > 0
-            ? `${products.length} result${products.length === 1 ? "" : "s"} for “${query}”`
-            : `No bags match “${query}”.`}
-        </p>
+      {/* Color + type facets */}
+      <div className="mt-6 space-y-3 border-t border-slate-100 pt-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="w-12 shrink-0 text-sm font-medium text-ink-muted">Color</span>
+          {COLOR_FAMILIES.map((f) => {
+            const on = color === f.value;
+            return (
+              <Link
+                key={f.value}
+                href={buildHref({ category: active, q: query, color: on ? undefined : f.value, type })}
+                aria-pressed={on}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition",
+                  on
+                    ? "border-brand-600 bg-brand-50 text-brand-700"
+                    : "border-slate-200 bg-white text-ink-soft hover:border-brand-400",
+                )}
+              >
+                <span
+                  className="h-3.5 w-3.5 rounded-full ring-1 ring-black/10"
+                  style={{ backgroundColor: f.hex }}
+                />
+                {f.label}
+              </Link>
+            );
+          })}
+        </div>
+        {facets.types.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-12 shrink-0 text-sm font-medium text-ink-muted">Type</span>
+            {facets.types.map((t) => {
+              const on = type === t;
+              return (
+                <Link
+                  key={t}
+                  href={buildHref({ category: active, q: query, color, type: on ? undefined : t })}
+                  aria-pressed={on}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-sm capitalize transition",
+                    on
+                      ? "border-brand-600 bg-brand-600 text-white"
+                      : "border-slate-200 bg-white text-ink-soft hover:border-brand-400",
+                  )}
+                >
+                  {t}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Result summary */}
+      {anyFilter && (
+        <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-ink-muted">
+          <span>
+            {products.length} result{products.length === 1 ? "" : "s"}
+            {query ? ` for “${query}”` : ""}
+          </span>
+          <Link href={buildHref({ category: active })} className="font-medium text-brand-700 hover:underline">
+            Clear filters
+          </Link>
+        </div>
       )}
 
       {products.length === 0 ? (
@@ -123,7 +185,7 @@ export default async function ProductsPage({
             <p className="text-ink-soft">
               No exact matches. Did you mean{" "}
               <Link
-                href={hrefFor(active, suggestion)}
+                href={buildHref({ category: active, q: suggestion })}
                 className="font-semibold text-brand-700 hover:underline"
               >
                 {suggestion}
@@ -132,31 +194,35 @@ export default async function ProductsPage({
             </p>
           ) : (
             <p className="text-ink-muted">
-              {query
-                ? "Try a different keyword — e.g. “backpack”, “crossbody”, “pink”, or a SKU."
+              {anyFilter
+                ? "No bags match these filters. Try broadening your search."
                 : "No products in this category yet."}
             </p>
           )}
-          {query && (
-            <Link href={hrefFor(active, undefined)} className="btn-secondary mt-4 inline-flex">
-              Clear search
+          {anyFilter && (
+            <Link href={buildHref({ category: active })} className="btn-secondary mt-4 inline-flex">
+              Clear filters
             </Link>
           )}
         </div>
       ) : (
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((p) => <ProductCard key={p.slug} p={p} />)}
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {products.map((p) => (
+            <ProductCard key={p.slug} p={p} />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-/** Build a /products URL preserving whichever of category / q are set. */
-function hrefFor(category?: string, q?: string): string {
+/** Build a /products URL preserving whichever filters are set. */
+function buildHref(o: { category?: string; q?: string; color?: string; type?: string }): string {
   const params = new URLSearchParams();
-  if (category) params.set("category", category);
-  if (q) params.set("q", q);
+  if (o.category) params.set("category", o.category);
+  if (o.q) params.set("q", o.q);
+  if (o.color) params.set("color", o.color);
+  if (o.type) params.set("type", o.type);
   const qs = params.toString();
   return qs ? `/products?${qs}` : "/products";
 }
