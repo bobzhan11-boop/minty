@@ -3,7 +3,11 @@ node_modules
 out
 build
 *.log
+
+# Secrets — never commit real env files (see .env.example for the keys)
+.env
 .env.local
+.env*.local
 .DS_Store
 
 # Prisma SQLite dev database
