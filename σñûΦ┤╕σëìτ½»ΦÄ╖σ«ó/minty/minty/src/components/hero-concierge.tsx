@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Send, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CtaLink } from "@/components/cta-link";
 import { MiaThread } from "@/components/mia-thread";
 import { useMiaChat } from "@/components/use-mia-chat";
@@ -28,6 +28,19 @@ const MARQUEE_PHRASES = [
   "Send your specs — get a quote within 6 hours",
 ];
 
+/** Tracks the user's `prefers-reduced-motion` setting (client-side). */
+function usePrefersReducedMotion() {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduce(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return reduce;
+}
+
 export function HeroConcierge({ hero }: { hero: HeroData | null }) {
   const slogan = hero?.slogan ?? "Custom Bags & Leather Goods, Factory-Direct";
   const subtitle =
@@ -38,6 +51,16 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
 
   const [active, setActive] = useState(false);
   const { messages, input, setInput, typing, send } = useMiaChat("hero_concierge");
+
+  // Respect prefers-reduced-motion: don't autoplay the clerk video; show its poster.
+  const reduceMotion = usePrefersReducedMotion();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (reduceMotion) v.pause();
+    else void v.play().catch(() => {});
+  }, [reduceMotion]);
 
   return (
     <section className="relative isolate flex min-h-[88vh] items-center overflow-hidden bg-white">
@@ -95,13 +118,14 @@ export function HeroConcierge({ hero }: { hero: HeroData | null }) {
             {/* figure */}
             <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[2rem] shadow-xl ring-1 ring-black/5">
               <video
+                ref={videoRef}
                 className="h-full w-full object-cover"
                 style={{
                   WebkitMaskImage: "linear-gradient(to bottom, black 78%, transparent 100%)",
                   maskImage: "linear-gradient(to bottom, black 78%, transparent 100%)",
                 }}
                 poster={CLERK_POSTER}
-                autoPlay
+                autoPlay={!reduceMotion}
                 muted
                 loop
                 playsInline

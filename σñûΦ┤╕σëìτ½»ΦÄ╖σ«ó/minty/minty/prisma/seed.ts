@@ -66,7 +66,7 @@ async function main() {
       description:
         "Ongoing seasonal program of quilted and PU crossbody bags with custom hardware and private-label branding. Repeat monthly production.",
       testimonial: "Consistent quality across large runs and reliable lead times. — Sourcing, DE",
-      cover: "/products/HJ-BW100004.png",
+      cover: "/products/HJ-BW100004.jpg",
     },
     {
       title: "TAKKO Fashion (Germany) — Kids' Bag Collection",
@@ -76,7 +76,7 @@ async function main() {
       description:
         "Playful kids' crossbody and coin-purse collection (animal faces, glitter, pom-poms) produced to strict EN71 safety and QC standards.",
       testimonial: "They nailed the fun details while keeping compliance tight. — Buyer, DE",
-      cover: "/products/HJ-BK200001.png",
+      cover: "/products/HJ-BK200001.jpg",
     },
     {
       title: "Tally Weijl (France) — Trend Crossbody Drop",
@@ -86,7 +86,7 @@ async function main() {
       description:
         "On-trend chain crossbody and mini bags for a fast-fashion capsule, sampled in two rounds and delivered on a tight calendar.",
       testimonial: "Fast sampling and on-trend execution let us hit the season. — Product, FR",
-      cover: "/products/HJ-BW100003.png",
+      cover: "/products/HJ-BW100003.jpg",
     },
   ];
   let csort = 0;
@@ -157,7 +157,7 @@ async function main() {
           "Women's & kids' bags for global brands. Wholesale MOQ · Worldwide shipping · Full OEM/ODM customization.",
         primaryCta: { label: "Get a Quote", href: "/contact" },
         secondaryCta: { label: "Browse Bags", href: "/products" },
-        bgImage: "/products/HJ-BW100001.png",
+        bgImage: "/products/HJ-BW100001.jpg",
       }),
     },
   });

@@ -1,15 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Factory, Layers, Globe, Sparkles, ArrowRight, Quote } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { parseJson } from "@/lib/utils";
-import { getFeaturedProducts } from "@/lib/queries";
+import { getFeaturedProducts, getPublishedProducts } from "@/lib/queries";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
 import { CtaLink } from "@/components/cta-link";
 import { HeroConcierge, type HeroData } from "@/components/hero-concierge";
+import { JsonLd } from "@/components/json-ld";
+import { organizationJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Factory, Layers, Globe, Sparkles,
@@ -18,18 +25,22 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 interface Advantage { icon: string; title: string; desc: string }
 
 export default async function HomePage() {
-  const [heroMod, advMod, featured, factory] = await Promise.all([
+  const [heroMod, advMod, featured, factory, kidsAll] = await Promise.all([
     prisma.homeModule.findFirst({ where: { moduleType: "hero", isActive: true } }),
     prisma.homeModule.findFirst({ where: { moduleType: "advantages", isActive: true } }),
     getFeaturedProducts(6),
     prisma.factoryInfo.findFirst(),
+    getPublishedProducts("kids-bags"),
   ]);
 
   const hero = parseJson<HeroData | null>(heroMod?.content, null);
   const advantages = parseJson<Advantage[]>(advMod?.content, []);
+  const kids = kidsAll.slice(0, 3);
 
   return (
     <>
+      <JsonLd data={organizationJsonLd()} />
+
       {/* ===== Hero: digital-clerk reception desk ===== */}
       <HeroConcierge hero={hero} />
 
@@ -76,6 +87,31 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ===== Kids' bags (surface the kids range on the homepage) ===== */}
+      {kids.length > 0 && (
+        <section className="section">
+          <div className="container">
+            <div className="flex items-end justify-between gap-4">
+              <SectionHeading eyebrow="For little ones" title="Kids' bags" />
+              <Link
+                href="/products?category=kids-bags"
+                className="hidden shrink-0 font-medium text-brand-700 hover:underline sm:block"
+              >
+                Shop all kids&apos; bags →
+              </Link>
+            </div>
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {kids.map((p) => <ProductCard key={p.slug} p={p} />)}
+            </div>
+            <div className="mt-8 text-center sm:hidden">
+              <Link href="/products?category=kids-bags" className="btn-secondary">
+                Shop all kids&apos; bags
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== Factory preview ===== */}
       {factory && (

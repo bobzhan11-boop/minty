@@ -7,6 +7,8 @@ import { parseJson, fromPrice } from "@/lib/utils";
 import { InquiryForm } from "@/components/inquiry-form";
 import { ProductView } from "@/components/product-view";
 import { WhatsAppInline } from "@/components/whatsapp-inline";
+import { JsonLd } from "@/components/json-ld";
+import { productJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +26,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const product = await getProduct(params.slug);
   if (!product) return { title: "Product not found" };
+  const image = product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url;
+  const images = image ? [image] : undefined;
+  const description = product.description?.slice(0, 160) ?? undefined;
   return {
     title: product.name,
-    description: product.description?.slice(0, 160) ?? undefined,
+    description,
+    alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
       title: product.name,
-      images: product.images[0]?.url ? [product.images[0].url] : undefined,
+      description,
+      url: `/products/${product.slug}`,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images,
     },
   };
 }
@@ -43,6 +57,24 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
   return (
     <div className="container py-10">
+      <JsonLd
+        data={[
+          productJsonLd({
+            name: product.name,
+            description: product.description,
+            sku: product.slug.toUpperCase(),
+            image: primary?.url,
+            category: product.category.name,
+            moq: product.moq,
+          }),
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Products", path: "/products" },
+            { name: product.name, path: `/products/${product.slug}` },
+          ]),
+        ]}
+      />
+
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-ink-muted">
         <Link href="/" className="hover:text-brand-700">Home</Link>

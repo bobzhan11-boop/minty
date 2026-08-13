@@ -6,6 +6,7 @@ import { SectionHeading } from "@/components/section-heading";
 export const metadata: Metadata = {
   title: "Contact — Request a Quote",
   description: "Tell us about your custom bag project and get a quote within 6 hours. Inquiry form or WhatsApp.",
+  alternates: { canonical: "/contact" },
 };
 
 const PERKS = [

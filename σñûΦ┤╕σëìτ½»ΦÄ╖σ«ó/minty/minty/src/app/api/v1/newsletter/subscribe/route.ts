@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { ok, fail } from "@/lib/api";
+import { ok, fail, methodNotAllowed } from "@/lib/api";
 
 export const runtime = "nodejs";
 
@@ -27,3 +27,9 @@ export async function POST(req: NextRequest) {
   // TODO: forward parsed.data.email to the email provider / store.
   return ok({ subscribed: true, email: parsed.data.email }, "Subscribed");
 }
+
+// Wrong-method requests get the { code, message, data } envelope, not an empty 405.
+export const GET = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;

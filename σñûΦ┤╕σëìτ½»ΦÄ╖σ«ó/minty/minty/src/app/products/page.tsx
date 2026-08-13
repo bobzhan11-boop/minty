@@ -1,17 +1,51 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { SITE } from "@/lib/constants";
 import { getPublishedProducts, getCategories } from "@/lib/queries";
 import { ProductCard } from "@/components/product-card";
-import { SectionHeading } from "@/components/section-heading";
 import { ProductSearch } from "@/components/product-search";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Bags — Wholesale Catalog",
-  description:
-    "Browse our catalog of custom women's & kids' bags: backpacks, crossbody bags, totes, handbags, clutches and small leather goods. Factory-direct, wholesale MOQ.",
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { category?: string; q?: string };
+}): Promise<Metadata> {
+  const q = searchParams.q?.trim();
+  const cat = searchParams.category
+    ? await prisma.productCategory.findUnique({ where: { slug: searchParams.category } })
+    : null;
+
+  // Search-result pages are thin/near-duplicate — canonicalize to the catalog and keep them
+  // out of the index (still followable) to avoid duplicate-content dilution.
+  if (q) {
+    return {
+      title: `Search: ${q} — Bags`,
+      description: `Search results for “${q}” in the ${SITE.name} wholesale bag catalog.`,
+      alternates: { canonical: cat ? `/products?category=${cat.slug}` : "/products" },
+      robots: { index: false, follow: true },
+    };
+  }
+
+  if (cat) {
+    const lower = cat.name.toLowerCase();
+    return {
+      title: `${cat.name} — Wholesale Catalog`,
+      description: `Custom ${lower}, factory-direct and fully customizable at wholesale MOQ. ${SITE.name} manufactures ${lower} for global brands.`,
+      alternates: { canonical: `/products?category=${cat.slug}` },
+      openGraph: { title: `${cat.name} — Wholesale Catalog`, url: `/products?category=${cat.slug}` },
+    };
+  }
+
+  return {
+    title: "Bags — Wholesale Catalog",
+    description:
+      "Browse our catalog of custom women's & kids' bags: backpacks, crossbody bags, totes, handbags, clutches and small leather goods. Factory-direct, wholesale MOQ.",
+    alternates: { canonical: "/products" },
+  };
+}
 
 export default async function ProductsPage({
   searchParams,
@@ -24,14 +58,19 @@ export default async function ProductsPage({
     getPublishedProducts(active, query),
     getCategories(),
   ]);
+  const activeCat = active ? categories.find((c) => c.slug === active) : null;
+  const heading = activeCat ? activeCat.name : "Wholesale Bags Catalog";
 
   return (
     <div className="container py-14">
-      <SectionHeading
-        eyebrow="Catalog"
-        title="Custom bags, built for your brand"
-        subtitle="Every style below is fully customizable — your materials, colors, hardware, linings and private-label branding. Search or filter to narrow down."
-      />
+      <div className="max-w-2xl">
+        <p className="eyebrow">Catalog</p>
+        <h1 className="mt-2 text-3xl font-bold text-ink sm:text-4xl">{heading}</h1>
+        <p className="mt-3 text-ink-muted">
+          Every style below is fully customizable — your materials, colors, hardware, linings and
+          private-label branding. Search or filter to narrow down.
+        </p>
+      </div>
 
       {/* Search */}
       <div className="mt-8">

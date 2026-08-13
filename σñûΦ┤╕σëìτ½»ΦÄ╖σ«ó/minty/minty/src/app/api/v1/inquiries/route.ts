@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, fail } from "@/lib/api";
+import { ok, fail, methodNotAllowed } from "@/lib/api";
 import { inquirySchema } from "@/lib/validation";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { notifyNewInquiry } from "@/lib/email";
@@ -94,3 +94,9 @@ export async function POST(req: NextRequest) {
     return fail(500, "Failed to save inquiry");
   }
 }
+
+// Wrong-method requests get the { code, message, data } envelope, not an empty 405.
+export const GET = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;

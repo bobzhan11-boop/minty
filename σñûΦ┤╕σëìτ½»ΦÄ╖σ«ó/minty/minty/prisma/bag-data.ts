@@ -114,7 +114,7 @@ export async function seedBagCatalog(prisma: PrismaClient) {
     await prisma.productImage.create({
       data: {
         productId: created.id,
-        url: `/products/${p.sku}.png`,
+        url: `/products/${p.sku}.jpg`,
         altText: p.name ?? p.sku,
         isPrimary: true,
         sortOrder: 0,

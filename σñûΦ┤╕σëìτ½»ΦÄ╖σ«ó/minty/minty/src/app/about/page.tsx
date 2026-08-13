@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "About & Factory",
   description: "Our brand story and a look inside the Minty factory — capacity, capabilities and certifications.",
+  alternates: { canonical: "/about" },
 };
 
 export default async function AboutPage() {

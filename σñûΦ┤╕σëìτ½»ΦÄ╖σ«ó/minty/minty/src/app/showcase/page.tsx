@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Showcase — Client Projects",
   description: "Real custom bag & leather-goods projects we've delivered for retail brands and importers across Europe, North America and Asia.",
+  alternates: { canonical: "/showcase" },
 };
 
 export default async function ShowcasePage() {

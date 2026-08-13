@@ -15,20 +15,21 @@ export const metadata: Metadata = {
     template: `%s — ${SITE.name}`,
   },
   description: SITE.description,
-  alternates: { canonical: "/" },
+  // NOTE: no site-wide `alternates.canonical` here — a static value would make every
+  // page canonicalize to the homepage. Each route sets its own self-referential canonical.
   openGraph: {
     title: `${SITE.name} — ${SITE.tagline}`,
     description: SITE.description,
     type: "website",
     url: SITE.url,
     siteName: SITE.name,
-    images: [{ url: "/products/HJ-BW100001.png", width: 800, height: 800, alt: SITE.name }],
+    images: [{ url: "/products/HJ-BW100001.jpg", width: 800, height: 800, alt: SITE.name }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE.name} — ${SITE.tagline}`,
     description: SITE.description,
-    images: ["/products/HJ-BW100001.png"],
+    images: ["/products/HJ-BW100001.jpg"],
   },
   robots: { index: true, follow: true },
 };
