@@ -64,6 +64,25 @@ function fieldMatch(tok: string): { OR: Where[] } {
   };
 }
 
+// Query aliases: common misspellings and theme words mapped to terms that actually
+// exist in the catalog, so "bakpack" or "unicorn" resolve instead of dead-ending.
+const SYNONYMS: Record<string, string[]> = {
+  bakpack: ["backpack"], backpck: ["backpack"], bacpack: ["backpack"], bckpack: ["backpack"],
+  crossbdy: ["crossbody"], crosbody: ["crossbody"], crossbdoy: ["crossbody"],
+  hanbag: ["handbag"], handbg: ["handbag"], rucksack: ["backpack"],
+  purse: ["clutch", "handbag"], pouch: ["coin", "cosmetic"], fanny: ["belt"], bumbag: ["belt"],
+  // whimsical kids themes -> closest real attributes present in the catalog
+  unicorn: ["rainbow", "star", "cute"], princess: ["glitter", "pink", "cute"],
+  dinosaur: ["cute", "novelty"], butterfly: ["floral", "cute"],
+  animal: ["cat", "bear", "fox", "bunny"],
+};
+
+/** A token plus any aliases (deduped). */
+function expand(tok: string): string[] {
+  const aliases = SYNONYMS[tok];
+  return aliases ? Array.from(new Set([tok, ...aliases])) : [tok];
+}
+
 /** Tokens that carry real search intent (cleaned, singularized, minus stopwords). */
 export function meaningfulTokens(raw: string | undefined | null): string[] {
   return tokenizeQuery(raw).filter((t) => !STOPWORDS.has(t));
@@ -82,7 +101,7 @@ export function buildSearchWhere(raw: string | undefined | null): Where {
   if (rawTokens.length === 0) return { id: -1 }; // e.g. "%" cleaned to nothing -> match none
   const tokens = rawTokens.filter((t) => !STOPWORDS.has(t));
   if (tokens.length === 0) return {}; // only generic/sales words -> show everything
-  return { AND: tokens.map(fieldMatch) };
+  return { AND: tokens.map((tok) => ({ OR: expand(tok).flatMap((v) => fieldMatch(v).OR) })) };
 }
 
 /**
@@ -93,7 +112,7 @@ export function buildSearchWhere(raw: string | undefined | null): Where {
 export function buildSearchWhereLoose(raw: string | undefined | null): Where {
   const tokens = meaningfulTokens(raw);
   if (tokens.length === 0) return {};
-  return { OR: tokens.flatMap((tok) => fieldMatch(tok).OR) };
+  return { OR: tokens.flatMap((tok) => expand(tok).flatMap((v) => fieldMatch(v).OR)) };
 }
 
 /** Product shape needed to compute a relevance score. */
@@ -141,4 +160,61 @@ export function rankBySearch<T extends Rankable>(items: T[], raw: string | undef
     .map((p, i) => ({ p, i, s: scoreProduct(p, tokens) }))
     .sort((a, b) => b.s - a.s || (a.p.sortOrder ?? 0) - (b.p.sortOrder ?? 0) || a.i - b.i)
     .map((x) => x.p);
+}
+
+// "Did you mean" ------------------------------------------------------------
+
+/** Canonical vocabulary used to suggest a correction for a mistyped query. */
+const VOCAB = [
+  "backpack", "crossbody", "tote", "handbag", "clutch", "wallet", "satchel", "hobo",
+  "shoulder", "baguette", "saddle", "wristlet", "pouch",
+  "black", "white", "pink", "red", "blue", "navy", "green", "brown", "beige", "grey", "silver", "gold", "purple",
+  "leather", "quilted", "chain", "glitter", "sequin", "floral", "studded", "woven",
+  "kids", "girls", "women", "cute", "party", "school", "travel",
+];
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+/**
+ * Suggest a corrected query when the user's terms are close to (but not) known
+ * vocabulary — e.g. "bakpack" -> "backpack". Returns the corrected string, or null.
+ */
+export function suggestQuery(raw: string | undefined | null): string | null {
+  const tokens = tokenizeQuery(raw);
+  if (tokens.length === 0) return null;
+  let changed = false;
+  const fixed = tokens.map((t) => {
+    if (t.length < 4 || VOCAB.includes(t) || SYNONYMS[t]) return t; // already resolvable
+    let best: string | null = null;
+    let bestD = 3;
+    for (const w of VOCAB) {
+      if (Math.abs(w.length - t.length) > 2) continue;
+      const d = levenshtein(t, w);
+      if (d < bestD) {
+        bestD = d;
+        best = w;
+      }
+    }
+    if (best && bestD <= 2) {
+      changed = true;
+      return best;
+    }
+    return t;
+  });
+  return changed ? fixed.join(" ") : null;
 }

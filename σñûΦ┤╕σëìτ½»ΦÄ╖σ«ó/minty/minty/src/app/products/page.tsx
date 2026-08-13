@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SITE } from "@/lib/constants";
 import { getPublishedProducts, getCategories } from "@/lib/queries";
+import { suggestQuery } from "@/lib/search";
 import { ProductCard } from "@/components/product-card";
 import { ProductSearch } from "@/components/product-search";
 
@@ -63,6 +64,7 @@ export default async function ProductsPage({
   ]);
   const activeCat = active ? categories.find((c) => c.slug === active) : null;
   const heading = activeCat ? activeCat.name : "Wholesale Bags Catalog";
+  const suggestion = query && products.length === 0 ? suggestQuery(query) : null;
 
   return (
     <div className="container py-14">
@@ -117,11 +119,24 @@ export default async function ProductsPage({
 
       {products.length === 0 ? (
         <div className="mt-12 text-center">
-          <p className="text-ink-muted">
-            {query
-              ? "Try a different keyword — e.g. “backpack”, “crossbody”, “pink”, or a SKU."
-              : "No products in this category yet."}
-          </p>
+          {suggestion ? (
+            <p className="text-ink-soft">
+              No exact matches. Did you mean{" "}
+              <Link
+                href={hrefFor(active, suggestion)}
+                className="font-semibold text-brand-700 hover:underline"
+              >
+                {suggestion}
+              </Link>
+              ?
+            </p>
+          ) : (
+            <p className="text-ink-muted">
+              {query
+                ? "Try a different keyword — e.g. “backpack”, “crossbody”, “pink”, or a SKU."
+                : "No products in this category yet."}
+            </p>
+          )}
           {query && (
             <Link href={hrefFor(active, undefined)} className="btn-secondary mt-4 inline-flex">
               Clear search

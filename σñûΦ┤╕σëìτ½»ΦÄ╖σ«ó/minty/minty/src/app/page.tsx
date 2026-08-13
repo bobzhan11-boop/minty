@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Factory, Layers, Globe, Sparkles, ArrowRight, Quote } from "lucide-react";
+import { Factory, Layers, Globe, Sparkles, ArrowRight, Quote, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { parseJson } from "@/lib/utils";
 import { getFeaturedProducts, getPublishedProducts } from "@/lib/queries";
+import { FACTORY_TRUSTED_BY, FACTORY_CREDENTIALS } from "@/lib/factory-profile";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
 import { CtaLink } from "@/components/cta-link";
@@ -25,12 +26,17 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 interface Advantage { icon: string; title: string; desc: string }
 
 export default async function HomePage() {
-  const [heroMod, advMod, featured, factory, kidsAll] = await Promise.all([
+  const [heroMod, advMod, featured, factory, kidsAll, testimonials] = await Promise.all([
     prisma.homeModule.findFirst({ where: { moduleType: "hero", isActive: true } }),
     prisma.homeModule.findFirst({ where: { moduleType: "advantages", isActive: true } }),
     getFeaturedProducts(6),
     prisma.factoryInfo.findFirst(),
     getPublishedProducts("kids-bags"),
+    prisma.case.findMany({
+      where: { status: "published", testimonial: { not: null } },
+      orderBy: { sortOrder: "asc" },
+      take: 3,
+    }),
   ]);
 
   const hero = parseJson<HeroData | null>(heroMod?.content, null);
@@ -113,6 +119,33 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* ===== Trust band ===== */}
+      <section className="border-y border-slate-100 bg-white py-12">
+        <div className="container">
+          <p className="text-center text-sm font-medium uppercase tracking-[0.2em] text-ink-muted">
+            Trusted by leading retail brands
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
+            {FACTORY_TRUSTED_BY.map((b) => (
+              <span key={b} className="text-2xl font-bold tracking-tight text-ink/70">
+                {b}
+              </span>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {FACTORY_CREDENTIALS.map((c) => (
+              <span
+                key={c.name}
+                title={c.detail}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-soft"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-brand-600" /> {c.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== Factory preview ===== */}
       {factory && (
         <section className="section">
@@ -144,6 +177,24 @@ export default async function HomePage() {
                 </div>
               </dl>
               <Link href="/about" className="btn-secondary mt-8">Go deeper into the factory</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== Testimonials ===== */}
+      {testimonials.length > 0 && (
+        <section className="section">
+          <div className="container">
+            <SectionHeading center eyebrow="What buyers say" title="Sourcing teams keep coming back" />
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {testimonials.map((t) => (
+                <figure key={t.id} className="card p-6">
+                  <Quote className="h-6 w-6 text-brand-300" />
+                  <blockquote className="mt-3 text-ink-soft">{t.testimonial}</blockquote>
+                  <figcaption className="mt-4 text-sm font-semibold text-ink">{t.title}</figcaption>
+                </figure>
+              ))}
             </div>
           </div>
         </section>

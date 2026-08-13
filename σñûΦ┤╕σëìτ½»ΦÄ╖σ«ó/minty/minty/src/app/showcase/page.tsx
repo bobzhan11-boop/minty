@@ -22,6 +22,7 @@ export default async function ShowcasePage() {
   return (
     <div className="container py-14">
       <SectionHeading
+        as="h1"
         eyebrow="Showcase"
         title="Brands we've helped bring to market"
         subtitle="From small-batch launches to repeat monthly programs — a sample of recent work."

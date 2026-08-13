@@ -23,6 +23,7 @@ export default function CustomOrderPage() {
       <section className="section">
         <div className="container">
           <SectionHeading
+            as="h1"
             center
             eyebrow="Custom Manufacturing"
             title="From idea to doorstep in five steps"

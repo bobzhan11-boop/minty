@@ -21,6 +21,7 @@ export default function ContactPage() {
       <div className="container grid gap-12 py-14 lg:grid-cols-[1fr_1.2fr]">
         <div>
           <SectionHeading
+            as="h1"
             eyebrow="Contact"
             title="Let's build your bag line"
             subtitle="Share your specs, materials, target quantity and timeline. We'll come back with pricing and next steps."
