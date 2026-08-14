@@ -5,7 +5,7 @@ import { Factory, Layers, Globe, Sparkles, ArrowRight, Quote, ShieldCheck } from
 import { prisma } from "@/lib/prisma";
 import { parseJson } from "@/lib/utils";
 import { getFeaturedProducts, getPublishedProducts } from "@/lib/queries";
-import { FACTORY_TRUSTED_BY, FACTORY_CREDENTIALS } from "@/lib/factory-profile";
+import { CUSTOMER_LOGOS, FACTORY_CREDENTIALS } from "@/lib/factory-profile";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
 import { CtaLink } from "@/components/cta-link";
@@ -154,11 +154,17 @@ export default async function HomePage() {
           <p className="text-center text-sm font-medium uppercase tracking-[0.2em] text-ink-muted">
             Trusted by leading retail brands
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            {FACTORY_TRUSTED_BY.map((b) => (
-              <span key={b} className="text-2xl font-bold tracking-tight text-ink/70">
-                {b}
-              </span>
+          <div className="mt-8 grid grid-cols-3 items-center gap-x-8 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
+            {CUSTOMER_LOGOS.slice(0, 12).map((c) => (
+              <div key={c.src} className="flex items-center justify-center">
+                <Image
+                  src={c.src}
+                  alt={`${c.name} logo`}
+                  width={130}
+                  height={44}
+                  className="h-8 w-auto object-contain opacity-70 transition hover:opacity-100"
+                />
+              </div>
             ))}
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -171,6 +177,9 @@ export default async function HomePage() {
                 <ShieldCheck className="h-3.5 w-3.5 text-brand-600" /> {c.name}
               </span>
             ))}
+            <Link href="/showcase" className="text-xs font-medium text-brand-700 hover:underline">
+              See all customers →
+            </Link>
           </div>
         </div>
       </section>

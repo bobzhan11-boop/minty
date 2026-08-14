@@ -31,6 +31,40 @@ export const FACTORY_CREDENTIALS: { name: string; detail: string }[] = [
 /** Global retail brands that source from our factory. */
 export const FACTORY_TRUSTED_BY: string[] = ["C&A", "TAKKO", "Tally Weijl"];
 
+/** Real historical customers (logos in /public/customers), from the company deck. */
+export const CUSTOMER_LOGOS: { name: string; src: string }[] = [
+  { name: "GAP", src: "/customers/gap.png" },
+  { name: "H&M", src: "/customers/hm.png" },
+  { name: "Zara", src: "/customers/zara.png" },
+  { name: "Mango", src: "/customers/mango.png" },
+  { name: "Pull&Bear", src: "/customers/pull-bear.png" },
+  { name: "C&A", src: "/customers/cea.png" },
+  { name: "Calvin Klein", src: "/customers/calvin-klein.png" },
+  { name: "Target", src: "/customers/target.png" },
+  { name: "Old Navy", src: "/customers/old-navy.png" },
+  { name: "Jack & Jones", src: "/customers/jack-jones.png" },
+  { name: "Only", src: "/customers/only.png" },
+  { name: "s.Oliver", src: "/customers/s-oliver.png" },
+  { name: "Tally Weijl", src: "/customers/tally-weijl.png" },
+  { name: "Pieces", src: "/customers/pieces.png" },
+  { name: "Esmara", src: "/customers/esmara.png" },
+  { name: "Suiteblanco", src: "/customers/suiteblanco.png" },
+  { name: "Hering", src: "/customers/hering.png" },
+  { name: "Calliope", src: "/customers/calliope.png" },
+  { name: "Top Secret", src: "/customers/top-secret.png" },
+  { name: "Görtz", src: "/customers/gortz.png" },
+  { name: "Terranova", src: "/customers/terranova.png" },
+  { name: "Country Road", src: "/customers/country-road.png" },
+  { name: "Okaïdi", src: "/customers/okaidi.png" },
+  { name: "Orsay", src: "/customers/orsay.png" },
+  { name: "HBC", src: "/customers/hbc.png" },
+  { name: "Umbro", src: "/customers/umbro.png" },
+  { name: "Erke", src: "/customers/erke.png" },
+  { name: "FILA", src: "/customers/fila.png" },
+  { name: "Anta", src: "/customers/anta.png" },
+  { name: "Accessories", src: "/customers/accessories.png" },
+];
+
 /** Headline facts that show our scale and track record. */
 export const FACTORY_FACTS: { value: string; label: string }[] = [
   { value: "Since 2005", label: "20 years of manufacturing" },
