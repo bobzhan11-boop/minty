@@ -109,6 +109,11 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
               Wholesale · MOQ {product.moq.toLocaleString()} pcs
             </span>
           </div>
+          {tiers.length === 0 && (
+            <p className="mt-2 text-sm text-ink-muted">
+              We don&apos;t list prices publicly — send an inquiry or message us on WhatsApp for a quote.
+            </p>
+          )}
           <p className="mt-4 text-ink-soft">{product.description}</p>
 
           {product.specs && (

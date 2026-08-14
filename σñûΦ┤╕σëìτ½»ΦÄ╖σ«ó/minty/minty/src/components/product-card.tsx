@@ -8,6 +8,8 @@ export interface ProductCardData {
   moq: number;
   category: string;
   image: string;
+  /** Material family label (e.g. "Genuine Leather"), shown as a badge. */
+  material?: string;
   /** A second angle shown on hover (from the product gallery), if available. */
   hoverImage?: string;
   priceTiers: { qty: number; price: number }[] | null;
@@ -43,6 +45,11 @@ export function ProductCard({ p }: { p: ProductCardData }) {
         <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-ink-soft shadow-sm">
           {p.category}
         </span>
+        {p.material && (
+          <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+            {p.material}
+          </span>
+        )}
       </div>
       <div className="p-4">
         <h3 className="line-clamp-1 font-semibold text-ink group-hover:text-brand-700">

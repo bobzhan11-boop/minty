@@ -108,7 +108,7 @@ export async function seedBagCatalog(prisma: PrismaClient) {
         primaryColor: p.primaryColor ?? null,
         bagType: p.bagType ?? null,
         material: p.material ?? null,
-        moq: p.moq ?? 1000,
+        moq: 200,
         priceTiers: JSON.stringify([]),
         sortOrder: sort++,
         status: "published",

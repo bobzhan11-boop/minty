@@ -69,7 +69,7 @@ export async function seedBeltCatalog(prisma: PrismaClient): Promise<number> {
         primaryColor: p.primaryColor || null,
         bagType: p.bagType || null,
         material: p.material || null,
-        moq: 500,
+        moq: 200,
         priceTiers: JSON.stringify([]),
         sortOrder: sort++,
         status: "published",

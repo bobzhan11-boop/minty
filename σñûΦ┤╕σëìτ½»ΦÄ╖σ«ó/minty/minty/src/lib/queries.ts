@@ -8,6 +8,7 @@ function toCard(p: {
   name: string;
   moq: number;
   category: { name: string };
+  material: string | null;
   images: { url: string; isPrimary: boolean }[];
   priceTiers: string | null;
 }): ProductCardData {
@@ -18,6 +19,7 @@ function toCard(p: {
     name: p.name,
     moq: p.moq,
     category: p.category.name,
+    material: materialLabel(p.material),
     image: primary?.url ?? "",
     hoverImage: hover?.url,
     priceTiers: parseJson<{ qty: number; price: number }[]>(p.priceTiers, []),
@@ -46,6 +48,13 @@ export const MATERIAL_FAMILIES = [
   { label: "Polyester", value: "polyester", match: ["polyester"] },
   { label: "Cotton", value: "cotton", match: ["cotton"] },
 ] as const;
+
+/** Simplified material family label for display (e.g. "Genuine Leather"), or undefined. */
+export function materialLabel(raw: string | null | undefined): string | undefined {
+  if (!raw) return undefined;
+  const m = raw.toLowerCase();
+  return MATERIAL_FAMILIES.find((f) => f.match.some((x) => m.includes(x)))?.label;
+}
 
 type Where = Record<string, unknown>;
 

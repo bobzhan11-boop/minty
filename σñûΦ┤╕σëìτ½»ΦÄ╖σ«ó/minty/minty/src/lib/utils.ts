@@ -18,7 +18,7 @@ export function parseJson<T>(value: string | null | undefined, fallback: T): T {
 
 /** Format a price tier list like "From $4.20". */
 export function fromPrice(tiers: { qty: number; price: number }[] | null): string {
-  if (!tiers || tiers.length === 0) return "Contact for pricing";
+  if (!tiers || tiers.length === 0) return "Price on request";
   const min = Math.min(...tiers.map((t) => t.price));
   return `From $${min.toFixed(2)}`;
 }
