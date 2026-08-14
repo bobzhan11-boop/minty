@@ -11,6 +11,7 @@ interface Rec {
   sku: string;
   primaryColor: string | null;
   bagType: string | null;
+  material: string | null;
 }
 
 async function main() {
@@ -21,7 +22,7 @@ async function main() {
     if (!r.sku) continue;
     const res = await prisma.product.updateMany({
       where: { slug: r.sku.toLowerCase() },
-      data: { primaryColor: r.primaryColor ?? null, bagType: r.bagType ?? null },
+      data: { primaryColor: r.primaryColor ?? null, bagType: r.bagType ?? null, material: r.material ?? null },
     });
     n += res.count;
   }

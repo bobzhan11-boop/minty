@@ -26,7 +26,8 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 interface Advantage { icon: string; title: string; desc: string }
 
 export default async function HomePage() {
-  const [heroMod, advMod, featured, factory, kidsAll, testimonials] = await Promise.all([
+  const [heroMod, advMod, featured, factory, kidsAll, testimonials, womensBelts, mensBelts] =
+    await Promise.all([
     prisma.homeModule.findFirst({ where: { moduleType: "hero", isActive: true } }),
     prisma.homeModule.findFirst({ where: { moduleType: "advantages", isActive: true } }),
     getFeaturedProducts(6),
@@ -37,11 +38,14 @@ export default async function HomePage() {
       orderBy: { sortOrder: "asc" },
       take: 3,
     }),
+    getPublishedProducts("womens-belts"),
+    getPublishedProducts("mens-belts"),
   ]);
 
   const hero = parseJson<HeroData | null>(heroMod?.content, null);
   const advantages = parseJson<Advantage[]>(advMod?.content, []);
   const kids = kidsAll.slice(0, 3);
+  const belts = [...womensBelts.slice(0, 3), ...mensBelts.slice(0, 3)];
 
   return (
     <>
@@ -114,6 +118,31 @@ export default async function HomePage() {
               <Link href="/products?category=kids-bags" className="btn-secondary">
                 Shop all kids&apos; bags
               </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== Belts ===== */}
+      {belts.length > 0 && (
+        <section className="section bg-slate-50">
+          <div className="container">
+            <div className="flex items-end justify-between gap-4">
+              <SectionHeading eyebrow="New — genuine leather" title="Leather belts" />
+              <div className="hidden shrink-0 items-center gap-4 text-sm sm:flex">
+                <Link href="/products?category=womens-belts" className="font-medium text-brand-700 hover:underline">
+                  Women&apos;s belts →
+                </Link>
+                <Link href="/products?category=mens-belts" className="font-medium text-brand-700 hover:underline">
+                  Men&apos;s belts →
+                </Link>
+              </div>
+            </div>
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {belts.map((p) => <ProductCard key={p.slug} p={p} />)}
+            </div>
+            <div className="mt-8 text-center sm:hidden">
+              <Link href="/products?category=mens-belts" className="btn-secondary">Shop belts</Link>
             </div>
           </div>
         </section>

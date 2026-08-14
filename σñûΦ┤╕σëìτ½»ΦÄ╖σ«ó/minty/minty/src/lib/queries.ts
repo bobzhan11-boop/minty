@@ -39,6 +39,14 @@ export const COLOR_FAMILIES = [
   { label: "Gold", value: "gold", hex: "#c9a24b", match: ["gold"] },
 ] as const;
 
+/** Material families for the catalog filter — each maps to matching `material` substrings. */
+export const MATERIAL_FAMILIES = [
+  { label: "Vegan Leather", value: "vegan", match: ["pu", "vegan"] },
+  { label: "Genuine Leather", value: "genuine", match: ["genuine"] },
+  { label: "Polyester", value: "polyester", match: ["polyester"] },
+  { label: "Cotton", value: "cotton", match: ["cotton"] },
+] as const;
+
 type Where = Record<string, unknown>;
 
 export async function getPublishedProducts(
@@ -46,15 +54,18 @@ export async function getPublishedProducts(
   query?: string,
   color?: string,
   type?: string,
+  material?: string,
 ): Promise<ProductCardData[]> {
   const family = color ? COLOR_FAMILIES.find((f) => f.value === color) : undefined;
+  const matFamily = material ? MATERIAL_FAMILIES.find((f) => f.value === material) : undefined;
   const opts = { orderBy: { sortOrder: "asc" as const }, include: { category: true, images: true } };
 
-  // Combine category + color + type + search under a single AND (avoids key collisions
-  // between the color OR-clause and the search OR/AND-clause).
+  // Combine category + color + material + type + search under a single AND (avoids key
+  // collisions between the OR-clauses).
   const whereWith = (searchWhere: Where): Where => {
     const and: Where[] = [];
     if (family) and.push({ OR: family.match.map((m) => ({ primaryColor: { contains: m } })) });
+    if (matFamily) and.push({ OR: matFamily.match.map((m) => ({ material: { contains: m } })) });
     if (type) and.push({ bagType: type });
     if (Object.keys(searchWhere).length) and.push(searchWhere);
     return {
@@ -73,14 +84,18 @@ export async function getPublishedProducts(
   return ranked.map(toCard);
 }
 
-/** Distinct bag types present in the catalog (for the type filter chips). */
-export async function getProductFacets(): Promise<{ types: string[] }> {
+/** Distinct bag types + material families present in the catalog (for the filter chips). */
+export async function getProductFacets(): Promise<{ types: string[]; materials: string[] }> {
   const rows = await prisma.product.findMany({
-    where: { status: "published", bagType: { not: null } },
-    select: { bagType: true },
+    where: { status: "published" },
+    select: { bagType: true, material: true },
   });
-  const types = Array.from(new Set(rows.map((r) => r.bagType!).filter(Boolean))).sort();
-  return { types };
+  const types = Array.from(new Set(rows.map((r) => r.bagType).filter(Boolean) as string[])).sort();
+  const mats = rows.map((r) => (r.material ?? "").toLowerCase());
+  const materials = MATERIAL_FAMILIES.filter((f) => mats.some((m) => f.match.some((x) => m.includes(x)))).map(
+    (f) => f.value,
+  );
+  return { types, materials };
 }
 
 export async function getFeaturedProducts(limit = 6): Promise<ProductCardData[]> {

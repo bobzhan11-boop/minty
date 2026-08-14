@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { seedBagCatalog } from "./bag-data";
+import { seedBeltCatalog } from "./belt-data";
 
 const prisma = new PrismaClient();
 
@@ -55,6 +56,8 @@ async function main() {
   // ---- Categories + real bag products (from product-catalog) ----
   const productCount = await seedBagCatalog(prisma);
   console.log(`  loaded ${productCount} bag products`);
+  const beltCount = await seedBeltCatalog(prisma);
+  console.log(`  loaded ${beltCount} belt products`);
 
   // ---- Cases (real retail clients; covers use real product photos) ----
   const cases = [

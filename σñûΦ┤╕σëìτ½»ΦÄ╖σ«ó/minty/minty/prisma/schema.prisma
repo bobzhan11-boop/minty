@@ -120,6 +120,7 @@ model Product {
   keywords    String?  // space/comma-joined search keywords (powers Mia + catalog search)
   primaryColor String? @map("primary_color") // faceted color filter
   bagType      String? @map("bag_type")       // faceted type filter
+  material     String?                         // faceted material filter
   status      String   @default("published") // draft | published | archived
   sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")
