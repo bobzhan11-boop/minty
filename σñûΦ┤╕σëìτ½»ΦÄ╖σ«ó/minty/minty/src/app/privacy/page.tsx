@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How Minty Bags collects, uses, and protects the information you share through our inquiry forms.",
+  description: "How Minty collects, uses, and protects the information you share through our inquiry forms.",
   alternates: { canonical: "/privacy" },
 };
 

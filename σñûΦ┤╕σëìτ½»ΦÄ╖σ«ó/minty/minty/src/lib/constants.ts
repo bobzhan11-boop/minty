@@ -1,6 +1,6 @@
 export const SITE = {
-  name: "Minty Bags",
-  // Kept short so the homepage <title> ("Minty Bags — <tagline>") stays under ~60 chars.
+  name: "Minty",
+  // Kept short so the homepage <title> ("Minty — <tagline>") stays under ~60 chars.
   tagline: "Custom Bag & Leather-Goods Manufacturer",
   // ~155 chars — fits the SERP meta-description window without truncation.
   description:

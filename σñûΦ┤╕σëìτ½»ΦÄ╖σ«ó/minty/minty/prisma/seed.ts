@@ -11,7 +11,7 @@ const img = (id: string, w = 800) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=70`;
 
 async function main() {
-  console.log("→ Seeding Minty Bags data…");
+  console.log("→ Seeding Minty data…");
 
   // ---- Wipe (idempotent re-seed) ----
   await prisma.inquiryNote.deleteMany();

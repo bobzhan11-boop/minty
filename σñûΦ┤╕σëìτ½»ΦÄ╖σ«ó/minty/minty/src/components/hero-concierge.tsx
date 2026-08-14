@@ -20,7 +20,7 @@ export interface HeroData {
 
 /** Readable one-line intro sentences that flow behind the figure (full-bleed). */
 const MARQUEE_PHRASES = [
-  "Minty Bags — your factory-direct custom bag partner",
+  "Minty — your factory-direct custom bag & leather-goods partner",
   "Women's & kids' bags · backpacks, crossbody, totes & more",
   "Wholesale MOQ · worldwide shipping · full customization",
   "PU & genuine leather · custom hardware · private label",
