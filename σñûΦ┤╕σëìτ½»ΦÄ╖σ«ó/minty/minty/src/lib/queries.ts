@@ -13,7 +13,11 @@ function toCard(p: {
   priceTiers: string | null;
 }): ProductCardData {
   const primary = p.images.find((i) => i.isPrimary) ?? p.images[0];
-  const hover = p.images.find((i) => i.url !== primary?.url);
+  // primary first, then the remaining gallery images in order (cycled on hover)
+  const images = [
+    ...(primary ? [primary.url] : []),
+    ...p.images.filter((i) => i.url !== primary?.url).map((i) => i.url),
+  ];
   return {
     slug: p.slug,
     name: p.name,
@@ -21,7 +25,7 @@ function toCard(p: {
     category: p.category.name,
     material: materialLabel(p.material),
     image: primary?.url ?? "",
-    hoverImage: hover?.url,
+    images,
     priceTiers: parseJson<{ qty: number; price: number }[]>(p.priceTiers, []),
   };
 }
@@ -67,7 +71,10 @@ export async function getPublishedProducts(
 ): Promise<ProductCardData[]> {
   const family = color ? COLOR_FAMILIES.find((f) => f.value === color) : undefined;
   const matFamily = material ? MATERIAL_FAMILIES.find((f) => f.value === material) : undefined;
-  const opts = { orderBy: { sortOrder: "asc" as const }, include: { category: true, images: true } };
+  const opts = {
+    orderBy: { sortOrder: "asc" as const },
+    include: { category: true, images: { orderBy: { sortOrder: "asc" as const } } },
+  };
 
   // Combine category + color + material + type + search under a single AND (avoids key
   // collisions between the OR-clauses).
@@ -121,7 +128,7 @@ export async function getRelatedProducts(
     where: { status: "published", categoryId, slug: { not: excludeSlug } },
     orderBy: { sortOrder: "asc" },
     take: limit,
-    include: { category: true, images: true },
+    include: { category: true, images: { orderBy: { sortOrder: "asc" } } },
   });
   return products.map(toCard);
 }
