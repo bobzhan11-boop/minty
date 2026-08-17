@@ -80,8 +80,19 @@ npm run dev        # http://localhost:3000
   land in 垃圾邮件 (spam)** — open that folder, mark them "not spam", and whitelist the sender.
 - Anti-spam rate limit: **20 inquiry submissions per hour per IP**.
 
+## Security
+- **Never commit `.env`** (it's gitignored). Secrets like the QQ authorization code must be
+  shared privately (message/host secrets UI), never through git.
+- Enable the **secret guard** once per clone — it blocks committing any `.env` file or a
+  secret-looking value (SMTP password, API key):
+  ```bash
+  cp scripts/pre-commit "$(git rev-parse --git-path hooks)/pre-commit"
+  chmod +x "$(git rev-parse --git-path hooks)/pre-commit"
+  ```
+- If a secret ever *does* get pushed, rotate it (generate a new one) — deleting it from
+  history isn't enough.
+
 ## Notes
-- Never commit `.env`.
 - For high-volume production email, switch to a transactional provider (Resend / SendGrid)
   with your own verified domain, and set `RESEND_API_KEY`.
 - Reusable maintenance scripts live in `prisma/` (image optimization, gallery import, belt
