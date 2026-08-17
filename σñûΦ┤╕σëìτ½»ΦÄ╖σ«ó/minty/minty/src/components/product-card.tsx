@@ -34,7 +34,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
     setIdx(0);
     stop();
     // loop through every photo while the mouse stays over the card
-    timer.current = setInterval(() => setIdx((i) => (i + 1) % gallery.length), 750);
+    timer.current = setInterval(() => setIdx((i) => (i + 1) % gallery.length), 1000);
   };
   const leave = () => {
     stop();
