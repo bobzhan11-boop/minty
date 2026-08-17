@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   // Rate limit: 5 submissions / hour / IP
   const ip = clientIp(req.headers);
-  const rl = rateLimit(`inquiry:${ip}`, 5, 60 * 60 * 1000);
+  const rl = rateLimit(`inquiry:${ip}`, 20, 60 * 60 * 1000);
   if (!rl.ok) {
     return fail(429, "Too many submissions. Please try again later.");
   }
