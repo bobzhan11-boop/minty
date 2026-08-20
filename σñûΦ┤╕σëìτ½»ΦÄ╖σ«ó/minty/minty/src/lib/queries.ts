@@ -47,6 +47,9 @@ export const COLOR_FAMILIES = [
 
 /** Material families for the catalog filter — each maps to matching `material` substrings. */
 export const MATERIAL_FAMILIES = [
+  // more-specific first so "sequin with PU trim" -> Sequin (not Vegan Leather)
+  { label: "Sequin", value: "sequin", match: ["sequin"] },
+  { label: "PVC / Jelly", value: "pvc", match: ["pvc", "jelly"] },
   { label: "Vegan Leather", value: "vegan", match: ["pu", "vegan"] },
   { label: "Genuine Leather", value: "genuine", match: ["genuine"] },
   { label: "Polyester", value: "polyester", match: ["polyester"] },
