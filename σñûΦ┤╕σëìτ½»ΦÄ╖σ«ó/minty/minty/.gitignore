@@ -13,3 +13,6 @@ build
 # Prisma SQLite dev database
 prisma/dev.db
 prisma/dev.db-journal
+
+# TS incremental build cache
+tsconfig.tsbuildinfo
