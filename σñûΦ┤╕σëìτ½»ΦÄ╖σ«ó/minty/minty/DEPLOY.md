@@ -36,6 +36,10 @@ You'll upload your already-seeded local database, so no re-seeding is needed.
 
 ## Part B — Deploy on Vercel
 
+> **Which branch?** All the current site is on the branch **`feat/seo-search-galleries`**.
+> Either merge it into `main` first, or in Vercel set **Settings → Git → Production Branch**
+> to `feat/seo-search-galleries` so the live site deploys from it.
+
 1. Go to <https://vercel.com>, sign up **with your GitHub account** (free).
 2. **Add New → Project**, and import the repo **`bobzhan11-boop/minty`**.
 3. In the import screen, set **Root Directory** to:
