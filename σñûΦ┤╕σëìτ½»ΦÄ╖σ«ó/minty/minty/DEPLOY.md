@@ -10,27 +10,32 @@ You do this **once**. After that, every `git push` to the branch auto-deploys.
 
 ## Part A — Create the cloud database (Turso)
 
-You'll upload your already-seeded local database, so no re-seeding is needed.
+> **Windows note:** Turso ships no native Windows CLI, so we do this from the **web
+> dashboard** and then push the local database up with a script — no CLI needed.
 
-1. **Install the Turso CLI** (on the machine that has this repo):
-   - macOS/Linux/Git-Bash: `curl -sSfL https://get.tur.so/install.sh | bash`
-   - Windows (PowerShell): `irm https://get.tur.so/install.ps1 | iex`
-   - Then restart the terminal. Docs: <https://docs.turso.tech/cli/installation>
+1. **Create the database in the browser** (free):
+   - Go to <https://turso.tech> and sign up (use your GitHub account).
+   - **Create Database** → name it `minty` → pick the region nearest your customers.
 
-2. **Sign up / log in** (free): `turso auth signup`  (or `turso auth login`)
+2. **Get the two connection values** from the database's page (Overview / "Connect"):
+   - **Database URL** — looks like `libsql://minty-<org>.turso.io` → this is `TURSO_DATABASE_URL`
+   - **Create Token** (a.k.a. auth token) → this is `TURSO_AUTH_TOKEN`
+   Copy both somewhere safe — the token is a secret.
 
-3. **Create the database from your local file** — run this from the app folder
-   (`外贸前端获客/minty/minty`, where `prisma/dev.db` lives):
-   ```bash
-   turso db create minty --from-file prisma/dev.db
+3. **Put them in your local `.env`** (that file is gitignored, so the token never
+   reaches GitHub). Add these two lines to `外贸前端获客/minty/minty/.env`:
    ```
-   *(If your CLI version doesn't have `--from-file`, see the fallback at the bottom.)*
-
-4. **Get the two connection values** (copy them somewhere safe — they are secrets):
-   ```bash
-   turso db show minty --url            # -> TURSO_DATABASE_URL  (starts with libsql://)
-   turso db tokens create minty         # -> TURSO_AUTH_TOKEN    (long token)
+   TURSO_DATABASE_URL="libsql://minty-<org>.turso.io"
+   TURSO_AUTH_TOKEN="<your token>"
    ```
+
+4. **Push your seeded local database up to Turso** — from the app folder:
+   ```bash
+   node prisma/push-to-turso.js
+   ```
+   It recreates the full schema and copies every row (products, images, categories,
+   factory/case content…), then verifies the counts match. Safe to re-run anytime you
+   change the local catalog and want to refresh production.
 
 ---
 
@@ -87,14 +92,6 @@ You'll upload your already-seeded local database, so no re-seeding is needed.
 - **Custom domain later:** Vercel → Project → Settings → Domains → add your domain and
   follow the DNS steps; then set `NEXT_PUBLIC_SITE_URL` to it and redeploy.
 - **Secrets:** these live only in Vercel's env settings and your local `.env` — never in git.
-- **Updating catalog/products later:** change data locally, then re-import to Turso:
-  `turso db create minty2 --from-file prisma/dev.db` and swap the env vars, **or** push
-  individual changes with `turso db shell minty < changes.sql`.
-
-### Fallback if `turso db create --from-file` isn't available
-```bash
-# needs the sqlite3 CLI
-sqlite3 prisma/dev.db .dump > minty-dump.sql
-turso db create minty
-turso db shell minty < minty-dump.sql
-```
+- **Updating catalog/products later:** change data locally (re-run seeds / add products),
+  then refresh production by running `node prisma/push-to-turso.js` again — it drops and
+  recopies everything, and re-verifies the counts.
