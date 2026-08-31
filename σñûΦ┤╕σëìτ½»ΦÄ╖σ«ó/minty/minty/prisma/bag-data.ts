@@ -105,7 +105,10 @@ export async function seedBagCatalog(prisma: PrismaClient) {
         description: p.description ?? "",
         specs,
         keywords: [...kw].join(", "),
-        moq: p.moq ?? 1000,
+        primaryColor: p.primaryColor ?? null,
+        bagType: p.bagType ?? null,
+        material: p.material ?? null,
+        moq: 200,
         priceTiers: JSON.stringify([]),
         sortOrder: sort++,
         status: "published",
@@ -114,7 +117,7 @@ export async function seedBagCatalog(prisma: PrismaClient) {
     await prisma.productImage.create({
       data: {
         productId: created.id,
-        url: `/products/${p.sku}.png`,
+        url: `/products/${p.sku}.jpg`,
         altText: p.name ?? p.sku,
         isPrimary: true,
         sortOrder: 0,

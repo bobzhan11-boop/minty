@@ -6,7 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { parseJson, fromPrice } from "@/lib/utils";
 import { InquiryForm } from "@/components/inquiry-form";
 import { ProductView } from "@/components/product-view";
+import { ProductCard } from "@/components/product-card";
 import { WhatsAppInline } from "@/components/whatsapp-inline";
+import { JsonLd } from "@/components/json-ld";
+import { getRelatedProducts } from "@/lib/queries";
+import { productJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +28,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const product = await getProduct(params.slug);
   if (!product) return { title: "Product not found" };
+  const image = product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url;
+  const images = image ? [image] : undefined;
+  const description = product.description?.slice(0, 160) ?? undefined;
   return {
     title: product.name,
-    description: product.description?.slice(0, 160) ?? undefined,
+    description,
+    alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
       title: product.name,
-      images: product.images[0]?.url ? [product.images[0].url] : undefined,
+      description,
+      url: `/products/${product.slug}`,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images,
     },
   };
 }
@@ -40,9 +56,28 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
 
   const tiers = parseJson<{ qty: number; price: number }[]>(product.priceTiers, []);
   const primary = product.images.find((i) => i.isPrimary) ?? product.images[0];
+  const related = await getRelatedProducts(product.categoryId, product.slug, 4);
 
   return (
     <div className="container py-10">
+      <JsonLd
+        data={[
+          productJsonLd({
+            name: product.name,
+            description: product.description,
+            sku: product.slug.toUpperCase(),
+            image: primary?.url,
+            category: product.category.name,
+            moq: product.moq,
+          }),
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Products", path: "/products" },
+            { name: product.name, path: `/products/${product.slug}` },
+          ]),
+        ]}
+      />
+
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-ink-muted">
         <Link href="/" className="hover:text-brand-700">Home</Link>
@@ -74,6 +109,11 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
               Wholesale · MOQ {product.moq.toLocaleString()} pcs
             </span>
           </div>
+          {tiers.length === 0 && (
+            <p className="mt-2 text-sm text-ink-muted">
+              We don&apos;t list prices publicly — send an inquiry or message us on WhatsApp for a quote.
+            </p>
+          )}
           <p className="mt-4 text-ink-soft">{product.description}</p>
 
           {product.specs && (
@@ -120,6 +160,17 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           <InquiryForm productId={product.id} productName={product.name} compact />
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section className="mt-16 border-t border-slate-100 pt-12">
+          <h2 className="text-2xl font-bold text-ink">More {product.category.name}</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {related.map((r) => (
+              <ProductCard key={r.slug} p={r} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

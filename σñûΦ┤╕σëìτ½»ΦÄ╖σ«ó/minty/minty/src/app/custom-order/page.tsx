@@ -6,6 +6,7 @@ import { SectionHeading } from "@/components/section-heading";
 export const metadata: Metadata = {
   title: "Custom Orders — OEM & ODM Bags",
   description: "Our custom bag manufacturing process: pick a style, submit your design, approve a sample, produce, ship. Custom materials, hardware and private-label branding.",
+  alternates: { canonical: "/custom-order" },
 };
 
 const STEPS = [
@@ -22,6 +23,7 @@ export default function CustomOrderPage() {
       <section className="section">
         <div className="container">
           <SectionHeading
+            as="h1"
             center
             eyebrow="Custom Manufacturing"
             title="From idea to doorstep in five steps"

@@ -6,8 +6,10 @@ const nextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
-  // Production note: front a Postgres datasource via DATABASE_URL and run behind
-  // Nginx (SSL termination) per the deployment architecture in the spec.
+  // Keep the libSQL/Turso driver out of the server bundle (it has optional native bits).
+  experimental: {
+    serverComponentsExternalPackages: ["@libsql/client", "@prisma/adapter-libsql"],
+  },
 };
 
 export default nextConfig;

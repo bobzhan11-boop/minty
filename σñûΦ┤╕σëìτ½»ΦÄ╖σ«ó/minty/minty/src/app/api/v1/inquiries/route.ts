@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ok, fail } from "@/lib/api";
+import { ok, fail, methodNotAllowed } from "@/lib/api";
 import { inquirySchema } from "@/lib/validation";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { notifyNewInquiry } from "@/lib/email";
@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   // Rate limit: 5 submissions / hour / IP
   const ip = clientIp(req.headers);
-  const rl = rateLimit(`inquiry:${ip}`, 5, 60 * 60 * 1000);
+  const rl = rateLimit(`inquiry:${ip}`, 20, 60 * 60 * 1000);
   if (!rl.ok) {
     return fail(429, "Too many submissions. Please try again later.");
   }
@@ -94,3 +94,9 @@ export async function POST(req: NextRequest) {
     return fail(500, "Failed to save inquiry");
   }
 }
+
+// Wrong-method requests get the { code, message, data } envelope, not an empty 405.
+export const GET = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;

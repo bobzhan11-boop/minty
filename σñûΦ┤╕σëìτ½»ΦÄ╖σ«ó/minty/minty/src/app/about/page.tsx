@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "About & Factory",
   description: "Our brand story and a look inside the Minty factory — capacity, capabilities and certifications.",
+  alternates: { canonical: "/about" },
 };
 
 export default async function AboutPage() {
@@ -32,7 +33,7 @@ export default async function AboutPage() {
       <section className="section">
         <div className="container grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <SectionHeading eyebrow="Our Story" title="Manufacturing, minus the friction" />
+            <SectionHeading as="h1" eyebrow="Our Story" title="Manufacturing, minus the friction" />
             <p className="mt-4 text-ink-soft">{brand?.story}</p>
           </div>
           {brand?.videoUrl && (

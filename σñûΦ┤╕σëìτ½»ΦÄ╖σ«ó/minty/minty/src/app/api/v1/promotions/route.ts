@@ -1,4 +1,4 @@
-import { ok } from "@/lib/api";
+import { ok, methodNotAllowed } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -10,3 +10,9 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   return ok({ items: [] });
 }
+
+// Wrong-method requests get the { code, message, data } envelope, not an empty 405.
+export const POST = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;

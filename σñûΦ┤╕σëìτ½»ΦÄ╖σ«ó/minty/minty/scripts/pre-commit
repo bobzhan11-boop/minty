@@ -1,0 +1,39 @@
+#!/bin/sh
+# Minty secret guard (pre-commit).
+# Blocks committing real .env files or secret-looking values (SMTP password, API keys).
+# To bypass in an emergency (discouraged): git commit --no-verify
+#
+# Enable it:  cp scripts/pre-commit ../../../.git/hooks/pre-commit && chmod +x ../../../.git/hooks/pre-commit
+
+fail=0
+
+# 1) Never commit an env file that holds secrets (allow .env.example).
+for f in $(git -c core.quotepath=false diff --cached --name-only); do
+  b=${f##*/}
+  case "$b" in
+    .env.example) : ;;
+    .env | .env.*)
+      echo "BLOCKED: refusing to commit env file -> $f"
+      echo "         unstage it:  git rm --cached \"$f\""
+      fail=1
+      ;;
+  esac
+done
+
+# 2) Block secret-looking values newly added to any tracked file.
+added=$(git diff --cached -U0 --no-color | grep '^+' | grep -v '^+++' || true)
+if printf '%s' "$added" | grep -Eiq 'SMTP_PASS[[:space:]]*=[[:space:]]*"?[A-Za-z0-9]{12,}'; then
+  echo "BLOCKED: a staged line looks like an SMTP password."
+  fail=1
+fi
+if printf '%s' "$added" | grep -Eq 'RESEND_API_KEY[[:space:]]*=[[:space:]]*"?re_[A-Za-z0-9]{6,}'; then
+  echo "BLOCKED: a staged line looks like a Resend API key."
+  fail=1
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "Secrets belong in .env (gitignored), never in tracked files."
+  exit 1
+fi
+exit 0

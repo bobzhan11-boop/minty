@@ -1,15 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Factory, Layers, Globe, Sparkles, ArrowRight, Quote } from "lucide-react";
+import { Factory, Layers, Globe, Sparkles, ArrowRight, Quote, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { parseJson } from "@/lib/utils";
-import { getFeaturedProducts } from "@/lib/queries";
+import { getFeaturedProducts, getPublishedProducts } from "@/lib/queries";
+import { CUSTOMER_LOGOS, FACTORY_CREDENTIALS } from "@/lib/factory-profile";
 import { ProductCard } from "@/components/product-card";
 import { SectionHeading } from "@/components/section-heading";
 import { CtaLink } from "@/components/cta-link";
 import { HeroConcierge, type HeroData } from "@/components/hero-concierge";
+import { JsonLd } from "@/components/json-ld";
+import { organizationJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Factory, Layers, Globe, Sparkles,
@@ -18,18 +26,31 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 interface Advantage { icon: string; title: string; desc: string }
 
 export default async function HomePage() {
-  const [heroMod, advMod, featured, factory] = await Promise.all([
+  const [heroMod, advMod, featured, factory, kidsAll, testimonials, womensBelts, mensBelts] =
+    await Promise.all([
     prisma.homeModule.findFirst({ where: { moduleType: "hero", isActive: true } }),
     prisma.homeModule.findFirst({ where: { moduleType: "advantages", isActive: true } }),
     getFeaturedProducts(6),
     prisma.factoryInfo.findFirst(),
+    getPublishedProducts("kids-bags"),
+    prisma.case.findMany({
+      where: { status: "published", testimonial: { not: null } },
+      orderBy: { sortOrder: "asc" },
+      take: 3,
+    }),
+    getPublishedProducts("womens-belts"),
+    getPublishedProducts("mens-belts"),
   ]);
 
   const hero = parseJson<HeroData | null>(heroMod?.content, null);
   const advantages = parseJson<Advantage[]>(advMod?.content, []);
+  const kids = kidsAll.slice(0, 3);
+  const belts = [...womensBelts.slice(0, 3), ...mensBelts.slice(0, 3)];
 
   return (
     <>
+      <JsonLd data={organizationJsonLd()} />
+
       {/* ===== Hero: digital-clerk reception desk ===== */}
       <HeroConcierge hero={hero} />
 
@@ -77,6 +98,92 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ===== Kids' bags (surface the kids range on the homepage) ===== */}
+      {kids.length > 0 && (
+        <section className="section">
+          <div className="container">
+            <div className="flex items-end justify-between gap-4">
+              <SectionHeading eyebrow="For little ones" title="Kids' bags" />
+              <Link
+                href="/products?category=kids-bags"
+                className="hidden shrink-0 font-medium text-brand-700 hover:underline sm:block"
+              >
+                Shop all kids&apos; bags →
+              </Link>
+            </div>
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {kids.map((p) => <ProductCard key={p.slug} p={p} />)}
+            </div>
+            <div className="mt-8 text-center sm:hidden">
+              <Link href="/products?category=kids-bags" className="btn-secondary">
+                Shop all kids&apos; bags
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== Belts ===== */}
+      {belts.length > 0 && (
+        <section className="section bg-slate-50">
+          <div className="container">
+            <div className="flex items-end justify-between gap-4">
+              <SectionHeading eyebrow="New — genuine leather" title="Leather belts" />
+              <div className="hidden shrink-0 items-center gap-4 text-sm sm:flex">
+                <Link href="/products?category=womens-belts" className="font-medium text-brand-700 hover:underline">
+                  Women&apos;s belts →
+                </Link>
+                <Link href="/products?category=mens-belts" className="font-medium text-brand-700 hover:underline">
+                  Men&apos;s belts →
+                </Link>
+              </div>
+            </div>
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {belts.map((p) => <ProductCard key={p.slug} p={p} />)}
+            </div>
+            <div className="mt-8 text-center sm:hidden">
+              <Link href="/products?category=mens-belts" className="btn-secondary">Shop belts</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== Trust band ===== */}
+      <section className="border-y border-slate-100 bg-white py-12">
+        <div className="container">
+          <p className="text-center text-sm font-medium uppercase tracking-[0.2em] text-ink-muted">
+            Trusted by leading retail brands
+          </p>
+          <div className="mt-8 grid grid-cols-3 items-center gap-x-8 gap-y-6 sm:grid-cols-4 lg:grid-cols-6">
+            {CUSTOMER_LOGOS.slice(0, 12).map((c) => (
+              <div key={c.src} className="flex items-center justify-center">
+                <Image
+                  src={c.src}
+                  alt={`${c.name} logo`}
+                  width={130}
+                  height={44}
+                  className="h-8 w-auto object-contain opacity-70 transition hover:opacity-100"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {FACTORY_CREDENTIALS.map((c) => (
+              <span
+                key={c.name}
+                title={c.detail}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-ink-soft"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-brand-600" /> {c.name}
+              </span>
+            ))}
+            <Link href="/showcase" className="text-xs font-medium text-brand-700 hover:underline">
+              See all customers →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ===== Factory preview ===== */}
       {factory && (
         <section className="section">
@@ -108,6 +215,24 @@ export default async function HomePage() {
                 </div>
               </dl>
               <Link href="/about" className="btn-secondary mt-8">Go deeper into the factory</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== Testimonials ===== */}
+      {testimonials.length > 0 && (
+        <section className="section">
+          <div className="container">
+            <SectionHeading center eyebrow="What buyers say" title="Sourcing teams keep coming back" />
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {testimonials.map((t) => (
+                <figure key={t.id} className="card p-6">
+                  <Quote className="h-6 w-6 text-brand-300" />
+                  <blockquote className="mt-3 text-ink-soft">{t.testimonial}</blockquote>
+                  <figcaption className="mt-4 text-sm font-semibold text-ink">{t.title}</figcaption>
+                </figure>
+              ))}
             </div>
           </div>
         </section>

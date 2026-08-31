@@ -1,8 +1,10 @@
 export const SITE = {
-  name: "Minty Bags",
-  tagline: "Custom Bag & Leather-Goods Manufacturer for Global Brands",
+  name: "Minty",
+  // Kept short so the homepage <title> ("Minty — <tagline>") stays under ~60 chars.
+  tagline: "Custom Bag & Leather-Goods Manufacturer",
+  // ~155 chars — fits the SERP meta-description window without truncation.
   description:
-    "Factory-direct custom handbags, backpacks and leather goods — women's & kids' bags. Wholesale MOQ, worldwide shipping, full customization (PU/leather, hardware, private label).",
+    "Factory-direct custom handbags, backpacks & leather goods — women's & kids' bags. Wholesale MOQ, worldwide shipping, full OEM & private-label customization.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   /** Real manufacturer behind the brand. */
   company: "Pingyang Jinweilong Leather Product Co., Ltd (HOKA GROUP)",
@@ -22,7 +24,7 @@ export function whatsappUrl(text?: string): string {
 }
 
 export const NAV_LINKS = [
-  { href: "/products", label: "Bags" },
+  { href: "/products", label: "Products" },
   { href: "/custom-order", label: "Custom Orders" },
   { href: "/about", label: "Factory" },
   { href: "/showcase", label: "Showcase" },

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Terms of Service" };
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "The terms governing your use of the Minty website, quotes, and services.",
+  alternates: { canonical: "/terms" },
+};
 
 export default function TermsPage() {
   return (
