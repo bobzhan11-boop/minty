@@ -57,16 +57,24 @@ production, etc.).
 
 ## 4. Database + seed
 
-Product photos, customer logos, and the bag/belt catalogs are committed, so seeding runs
-fully offline.
+The database file (`dev.db`) is **not** in git, so you build it locally with **one command**.
+Product photos, customer logos, and the bag/belt catalogs *are* committed, so this runs
+fully offline (no internet needed):
 
 ```bash
-npm run db:push                      # create the SQLite schema (dev.db)
-npm run db:seed                      # categories + 96 bags + 46 belts + factory/showcase content
-npx tsx prisma/reseed-bag-images.ts  # add the curated multi-angle bag galleries
+npm run db:setup
 ```
 
-To wipe and start fresh: `npm run db:reset` then re-run the `reseed-bag-images` step.
+That creates the schema and loads everything: **164 products (118 bags + 46 belts),
+780 gallery images**, plus factory/showcase/home content. It's the same as running:
+
+```bash
+npm run db:push                      # 1. create the SQLite schema
+npm run db:seed                      # 2. categories + 118 bags + 46 belts + content
+npx tsx prisma/reseed-bag-images.ts  # 3. curated multi-angle bag galleries
+```
+
+To wipe and rebuild from scratch: `npm run db:reset`.
 
 ## 5. Run
 

@@ -11,8 +11,9 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:bags": "tsx prisma/seed-bags.ts",
+    "db:setup": "prisma db push && tsx prisma/seed.ts && tsx prisma/reseed-bag-images.ts",
     "db:studio": "prisma studio",
-    "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
+    "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts && tsx prisma/reseed-bag-images.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
